@@ -57,8 +57,9 @@ const els = {
   // Settings
   autoSaveInterval: document.getElementById('autoSaveInterval') as HTMLSelectElement,
   saveScroll: document.getElementById('saveScroll') as HTMLInputElement,
-  saveForm2: document.getElementById('saveForm') as HTMLInputElement,
+  saveFormData: document.getElementById('saveFormData') as HTMLInputElement,
   lazyRestore: document.getElementById('lazyRestore') as HTMLInputElement,
+  clearPreviousTabs: document.getElementById('clearPreviousTabs') as HTMLInputElement,
   theme: document.getElementById('theme') as HTMLSelectElement,
   // Edit Modal
   editModal: document.getElementById('editModal')!,
@@ -169,7 +170,9 @@ async function loadSettings(): Promise<void> {
   const settings = await sendMessage<Settings>(MessageType.GET_SETTINGS);
   els.autoSaveInterval.value = String(settings.autoSaveInterval);
   els.saveScroll.checked = settings.saveScrollPosition;
+  els.saveFormData.checked = settings.saveFormData;
   els.lazyRestore.checked = settings.lazyRestore;
+  els.clearPreviousTabs.checked = settings.clearPreviousTabs;
   els.theme.value = settings.theme;
 }
 
@@ -486,6 +489,9 @@ function setupEvents(): void {
   });
   els.lazyRestore.addEventListener('change', () => {
     void sendMessage(MessageType.UPDATE_SETTINGS, { lazyRestore: els.lazyRestore.checked });
+  });
+  els.clearPreviousTabs.addEventListener('change', () => {
+    void sendMessage(MessageType.UPDATE_SETTINGS, { clearPreviousTabs: els.clearPreviousTabs.checked });
   });
   els.theme.addEventListener('change', () => {
     void sendMessage(MessageType.UPDATE_SETTINGS, { theme: els.theme.value });

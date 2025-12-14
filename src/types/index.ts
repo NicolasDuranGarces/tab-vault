@@ -169,6 +169,8 @@ export interface Settings {
   detectDuplicates: boolean;
   /** Whether crash recovery is enabled */
   crashRecoveryEnabled: boolean;
+  /** Whether to clear previous tabs when restoring */
+  clearPreviousTabs: boolean;
   /** Whether onboarding has been completed */
   onboardingComplete: boolean;
 }
@@ -192,6 +194,7 @@ export const DEFAULT_SETTINGS: Settings = {
   lazyRestore: true,
   detectDuplicates: true,
   crashRecoveryEnabled: true,
+  clearPreviousTabs: false,
   onboardingComplete: false,
 };
 

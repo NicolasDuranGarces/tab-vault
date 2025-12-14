@@ -199,13 +199,22 @@ class SessionService {
       }
 
       // Detect duplicates if enabled
+      // Detect duplicates if enabled (only if NOT clearing previous tabs)
       const settings = await storageService.getSettings();
-      if (settings.detectDuplicates) {
+      if (settings.detectDuplicates && !settings.clearPreviousTabs) {
         const currentTabs = await tabService.captureCurrentWindowTabs(settings);
         const currentUrls = currentTabs.map(t => t.url);
         tabsToRestore = tabsToRestore.filter(
           t => !currentUrls.some(cu => this.isUrlMatch(t.url, cu))
         );
+      }
+
+      // Capture current tabs to close if requested
+      // We do this BEFORE restore to ensure we don't close newly restored tabs
+      let tabsToClose: number[] = [];
+      if (settings.clearPreviousTabs && !restoreOptions.newWindow) {
+        const currentTabs = await chrome.tabs.query({ currentWindow: true });
+        tabsToClose = currentTabs.map(t => t.id).filter((id): id is number => id !== undefined);
       }
 
       const createdTabIds = await tabService.restoreTabs(tabsToRestore, restoreOptions);
@@ -223,6 +232,18 @@ class SessionService {
       });
 
       await tabService.cycleTabs(createdTabIds);
+
+      // Close previous tabs if requested
+      if (tabsToClose.length > 0) {
+        // Ensure we don't close the window if something went wrong with restore
+        if (createdTabIds.length > 0) {
+          try {
+            await chrome.tabs.remove(tabsToClose);
+          } catch (error) {
+             console.error('Failed to close previous tabs:', error);
+          }
+        }
+      }
 
       return createdTabIds;
     } finally {
@@ -428,18 +449,23 @@ class SessionService {
         tabsToRestore = session.tabs.filter(t => restoreOptions.tabIds?.includes(t.id));
       }
 
-      // Detect duplicates if enabled
+      // Detect duplicates if enabled (only if NOT clearing previous tabs)
       const settings = await storageService.getSettings();
-      if (settings.detectDuplicates) {
+      if (settings.detectDuplicates && !settings.clearPreviousTabs) {
         const currentTabs = await tabService.captureCurrentWindowTabs(settings);
         const currentUrls = currentTabs.map(t => t.url);
-        tabsToRestore = tabsToRestore.filter(
-          t => !currentUrls.some(cu => this.isUrlMatch(t.url, cu))
-        );
+        tabsToRestore = tabsToRestore.filter(t => !currentUrls.some(cu => this.isUrlMatch(t.url, cu)));
+      }
+
+      // Capture current tabs to close if requested
+      let tabsToClose: number[] = [];
+      if (settings.clearPreviousTabs && !restoreOptions.newWindow) {
+        const currentTabs = await chrome.tabs.query({ currentWindow: true });
+        tabsToClose = currentTabs.map(t => t.id).filter((id): id is number => id !== undefined);
       }
 
       const createdTabIds = await tabService.restoreTabs(tabsToRestore, restoreOptions);
-
+      
       // Update statistics
       const stats = await storageService.getStatistics();
       await storageService.updateStatistics({
@@ -451,6 +477,17 @@ class SessionService {
       // If we await cycle, the button stays "Restoring..." during cycle.
       // This is good feedback.
       await tabService.cycleTabs(createdTabIds);
+
+      // Close previous tabs if requested
+      if (tabsToClose.length > 0) {
+          if (createdTabIds.length > 0) {
+            try {
+              await chrome.tabs.remove(tabsToClose);
+            } catch (error) {
+               console.error('Failed to close previous tabs:', error);
+            }
+          }
+      }
 
       return createdTabIds;
     } finally {
