@@ -16,6 +16,8 @@ import { extractDomain } from '@/utils/validation';
  * Session management service
  */
 class SessionService {
+  private restoringSessions = new Set<string>();
+
   /**
    * Creates and saves a new session from current tabs
    * @param name - Session name
@@ -168,42 +170,53 @@ class SessionService {
    * @returns Array of created tab IDs
    */
   async restoreSession(id: string, options: Partial<RestoreOptions> = {}): Promise<number[]> {
-    const session = await this.getSession(id);
-    if (!session) {
-      throw new Error('Session not found');
+    if (this.restoringSessions.has(id)) {
+      console.warn('Session restore already in progress for:', id);
+      return [];
     }
 
-    const restoreOptions: RestoreOptions = { ...DEFAULT_RESTORE_OPTIONS, ...options };
+    this.restoringSessions.add(id);
 
-    // Filter tabs if specific IDs are provided
-    let tabsToRestore = session.tabs;
-    if (restoreOptions.tabIds) {
-      tabsToRestore = session.tabs.filter(t => restoreOptions.tabIds?.includes(t.id));
+    try {
+      const session = await this.getSession(id);
+      if (!session) {
+        throw new Error('Session not found');
+      }
+
+      const restoreOptions: RestoreOptions = { ...DEFAULT_RESTORE_OPTIONS, ...options };
+
+      // Filter tabs if specific IDs are provided
+      let tabsToRestore = session.tabs;
+      if (restoreOptions.tabIds) {
+        tabsToRestore = session.tabs.filter(t => restoreOptions.tabIds?.includes(t.id));
+      }
+
+      // Detect duplicates if enabled
+      const settings = await storageService.getSettings();
+      if (settings.detectDuplicates) {
+        const currentTabs = await tabService.captureCurrentWindowTabs(settings);
+        const currentUrls = new Set(currentTabs.map(t => t.url));
+        tabsToRestore = tabsToRestore.filter(t => !currentUrls.has(t.url));
+      }
+
+      const createdTabIds = await tabService.restoreTabs(tabsToRestore, restoreOptions);
+
+      // Update session access time
+      session.lastAccessedAt = now();
+      await storageService.saveSession(session);
+
+      // Update statistics
+      const stats = await storageService.getStatistics();
+      await storageService.updateStatistics({
+        totalSessionsRestored: stats.totalSessionsRestored + 1,
+        totalTabsRestored: stats.totalTabsRestored + createdTabIds.length,
+        lastUseDate: now(),
+      });
+
+      return createdTabIds;
+    } finally {
+      this.restoringSessions.delete(id);
     }
-
-    // Detect duplicates if enabled
-    const settings = await storageService.getSettings();
-    if (settings.detectDuplicates) {
-      const currentTabs = await tabService.captureCurrentWindowTabs(settings);
-      const currentUrls = new Set(currentTabs.map(t => t.url));
-      tabsToRestore = tabsToRestore.filter(t => !currentUrls.has(t.url));
-    }
-
-    const createdTabIds = await tabService.restoreTabs(tabsToRestore, restoreOptions);
-
-    // Update session access time
-    session.lastAccessedAt = now();
-    await storageService.saveSession(session);
-
-    // Update statistics
-    const stats = await storageService.getStatistics();
-    await storageService.updateStatistics({
-      totalSessionsRestored: stats.totalSessionsRestored + 1,
-      totalTabsRestored: stats.totalTabsRestored + createdTabIds.length,
-      lastUseDate: now(),
-    });
-
-    return createdTabIds;
   }
 
   /**

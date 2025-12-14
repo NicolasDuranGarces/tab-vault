@@ -44,17 +44,26 @@ class TabService {
     const processedTabs: TabData[] = [];
 
     for (const tab of tabs) {
+      // Resolve lazy tabs first
+      let url = tab.url;
+      if (tab.id && url === 'chrome://newtab/') {
+        const pending = await this.getPendingLazyUrl(tab.id);
+        if (pending) {
+          url = pending;
+        }
+      }
+
       // Skip invalid URLs
-      if (!tab.url || !isValidUrl(tab.url)) {
+      if (!url || !isValidUrl(url)) {
         continue;
       }
 
       // Skip excluded domains
-      if (shouldExcludeUrl(tab.url, settings.excludedDomains)) {
+      if (shouldExcludeUrl(url, settings.excludedDomains)) {
         continue;
       }
 
-      const sanitizedUrl = sanitizeUrl(tab.url);
+      const sanitizedUrl = sanitizeUrl(url);
       if (!sanitizedUrl) {
         continue;
       }

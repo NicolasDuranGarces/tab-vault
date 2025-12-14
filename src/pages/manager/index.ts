@@ -188,8 +188,24 @@ async function saveSession(name: string, tags: string[]): Promise<void> {
   hideModal();
 }
 
-async function restoreSession(id: string): Promise<void> {
-  await sendMessage(MessageType.RESTORE_SESSION, { id });
+async function restoreSession(id: string, btn?: HTMLButtonElement): Promise<void> {
+  let originalText = '';
+  if (btn) {
+    btn.disabled = true;
+    originalText = btn.textContent || '';
+    btn.textContent = 'Restoring...';
+    btn.classList.add('loading');
+  }
+
+  try {
+    await sendMessage(MessageType.RESTORE_SESSION, { id });
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = originalText;
+      btn.classList.remove('loading');
+    }
+  }
 }
 
 async function deleteSession(id: string): Promise<void> {
@@ -359,7 +375,7 @@ function setupEvents(): void {
     if (!card) return;
     const id = card.dataset.id!;
     if (target.classList.contains('edit')) await openEditModal(id);
-    else if (target.classList.contains('restore')) await restoreSession(id);
+    else if (target.classList.contains('restore')) await restoreSession(id, target as HTMLButtonElement);
     else if (target.classList.contains('delete')) await deleteSession(id);
   });
 
