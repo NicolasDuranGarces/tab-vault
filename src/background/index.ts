@@ -124,6 +124,17 @@ chrome.tabs.onActivated.addListener(async activeInfo => {
 });
 
 // ============================================================================
+// TAB LOAD COMPLETE HANDLER (for scroll/form restore)
+// ============================================================================
+
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
+  // Only trigger when page finishes loading
+  if (changeInfo.status === 'complete') {
+    await tabService.restorePendingData(tabId);
+  }
+});
+
+// ============================================================================
 // MESSAGE HANDLERS
 // ============================================================================
 

@@ -44,6 +44,7 @@ const els = {
   sessionsGrid: document.getElementById('sessionsGrid')!,
   emptyState: document.getElementById('emptyState')!,
   searchInput: document.getElementById('searchInput') as HTMLInputElement,
+  tagFilter: document.getElementById('tagFilter') as HTMLSelectElement,
   saveBtn: document.getElementById('saveBtn')!,
   saveModal: document.getElementById('saveModal')!,
   saveForm: document.getElementById('saveForm') as HTMLFormElement,
@@ -397,23 +398,40 @@ function setupEvents(): void {
     document.documentElement.dataset.theme = els.theme.value;
   });
 
+  // Combined Filter Function
+  function applyFilters(): void {
+    const searchQuery = els.searchInput.value.toLowerCase();
+    const tagFilter = els.tagFilter.value;
+
+    let filtered = sessions;
+
+    // Apply tag filter first
+    if (tagFilter) {
+      filtered = filtered.filter(s => s.tags.includes(tagFilter));
+    }
+
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter(
+        s =>
+          s.name.toLowerCase().includes(searchQuery) ||
+          s.tags.some(t => t.toLowerCase().includes(searchQuery)) ||
+          s.domainPreview.some(d => d.toLowerCase().includes(searchQuery))
+      );
+    }
+
+    renderSessions(filtered);
+  }
+
   // Search
   let searchTimeout: ReturnType<typeof setTimeout>;
   els.searchInput.addEventListener('input', () => {
     clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-      const q = els.searchInput.value.toLowerCase();
-      const filtered = q
-        ? sessions.filter(
-            s =>
-              s.name.toLowerCase().includes(q) ||
-              s.tags.some(t => t.includes(q)) ||
-              s.domainPreview.some(d => d.includes(q))
-          )
-        : sessions;
-      renderSessions(filtered);
-    }, 200);
+    searchTimeout = setTimeout(applyFilters, 200);
   });
+
+  // Tag Filter
+  els.tagFilter.addEventListener('change', applyFilters);
 
   // Keyboard
   document.addEventListener('keydown', e => {
@@ -433,7 +451,27 @@ async function init(): Promise<void> {
   // Load data
   sessions = await sendMessage<SessionMetadata[]>(MessageType.GET_SESSIONS);
   renderSessions(sessions);
+  populateTags();
   await updateStorage();
+}
+
+/**
+ * Populates the tag filter dropdown with all unique tags from sessions
+ */
+function populateTags(): void {
+  const allTags = new Set<string>();
+  sessions.forEach(s => s.tags.forEach(t => allTags.add(t)));
+
+  // Clear existing options except "All Tags"
+  els.tagFilter.innerHTML = '<option value="">All Tags</option>';
+
+  // Sort and add tags
+  [...allTags].sort().forEach(tag => {
+    const option = document.createElement('option');
+    option.value = tag;
+    option.textContent = tag;
+    els.tagFilter.appendChild(option);
+  });
 }
 
 init().catch(console.error);
