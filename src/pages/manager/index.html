@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tab Vault - Session Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="manager.css">
+</head>
+
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" />
+                    <path d="M2 17L12 22L22 17" />
+                    <path d="M2 12L12 17L22 12" />
+                </svg>
+                <span>Tab Vault</span>
+            </div>
+            <nav class="nav">
+                <button class="nav-item active" data-view="sessions">Sessions</button>
+                <button class="nav-item" data-view="recovery">Recovery</button>
+                <button class="nav-item" data-view="settings">Settings</button>
+            </nav>
+            <div id="storageBar" class="storage-bar">
+                <div class="used"></div>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="main">
+            <header class="header">
+                <h1 id="viewTitle">Sessions</h1>
+                <div class="actions">
+                    <input type="search" id="searchInput" placeholder="Search...">
+                    <button id="saveBtn" class="btn-primary">Save Session</button>
+                </div>
+            </header>
+
+            <!-- Sessions View -->
+            <div id="sessionsView" class="view active">
+                <div id="sessionsGrid" class="grid"></div>
+                <div id="emptyState" class="empty hidden">
+                    <p>No sessions saved yet</p>
+                </div>
+            </div>
+
+            <!-- Recovery View -->
+            <div id="recoveryView" class="view">
+                <div id="recoveryList" class="list"></div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="settingsView" class="view">
+                <div class="settings">
+                    <label>Auto-save interval
+                        <select id="autoSaveInterval">
+                            <option value="0">Disabled</option>
+                            <option value="5" selected>5 minutes</option>
+                            <option value="10">10 minutes</option>
+                        </select>
+                    </label>
+                    <label><input type="checkbox" id="saveScroll" checked> Save scroll position</label>
+                    <label><input type="checkbox" id="saveForm" checked> Save form data</label>
+                    <label><input type="checkbox" id="lazyRestore" checked> Lazy restore</label>
+                    <label>Theme
+                        <select id="theme">
+                            <option value="dark">Dark</option>
+                            <option value="light">Light</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="saveModal" class="modal hidden">
+        <div class="modal-bg"></div>
+        <div class="modal-box">
+            <h3>Save Session</h3>
+            <form id="saveForm">
+                <input type="text" id="sessionName" placeholder="Session name" required>
+                <input type="text" id="sessionTags" placeholder="Tags (comma separated)">
+                <div class="btns">
+                    <button type="button" class="btn-cancel">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="manager.js"></script>
+</body>
+
+</html>

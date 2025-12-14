@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tab Vault</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="popup-header">
+      <div class="logo-section">
+        <div class="logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h1 class="logo-text">Tab Vault</h1>
+      </div>
+      <button id="settingsBtn" class="icon-btn" title="Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Quick Actions -->
+    <section class="quick-actions">
+      <button id="saveSessionBtn" class="primary-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+          <polyline points="17 21 17 13 7 13 7 21"></polyline>
+          <polyline points="7 3 7 8 15 8"></polyline>
+        </svg>
+        <span>Save Current Session</span>
+      </button>
+      <button id="openManagerBtn" class="secondary-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        <span>Open Manager</span>
+      </button>
+    </section>
+
+    <!-- Search -->
+    <div class="search-container">
+      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="text" id="searchInput" class="search-input" placeholder="Search sessions...">
+    </div>
+
+    <!-- Sessions List -->
+    <section class="sessions-section">
+      <div class="section-header">
+        <h2 class="section-title">Recent Sessions</h2>
+        <span id="sessionCount" class="session-count">0</span>
+      </div>
+      
+      <div id="sessionsList" class="sessions-list">
+        <!-- Sessions will be rendered here -->
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <span>Loading sessions...</span>
+        </div>
+      </div>
+
+      <div id="emptyState" class="empty-state hidden">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5">
+          <path d="M12 2L2 7L12 12L22 7L12 2Z"></path>
+          <path d="M2 17L12 22L22 17"></path>
+          <path d="M2 12L12 17L22 12"></path>
+        </svg>
+        <p>No sessions saved yet</p>
+        <span>Click "Save Current Session" to get started</span>
+      </div>
+    </section>
+
+    <!-- Recovery Notice -->
+    <div id="recoveryNotice" class="recovery-notice hidden">
+      <div class="recovery-content">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>Session recovery available</span>
+      </div>
+      <button id="recoverBtn" class="recover-btn">Recover</button>
+    </div>
+
+    <!-- Footer Stats -->
+    <footer class="popup-footer">
+      <div class="stat">
+        <span class="stat-value" id="totalSessions">0</span>
+        <span class="stat-label">Sessions</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="totalTabs">0</span>
+        <span class="stat-label">Tabs Saved</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Save Session Modal -->
+  <div id="saveModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h3 class="modal-title">Save Session</h3>
+      <form id="saveForm">
+        <div class="form-group">
+          <label for="sessionName">Session Name</label>
+          <input type="text" id="sessionName" class="form-input" placeholder="My Session" required>
+        </div>
+        <div class="form-group">
+          <label for="sessionTags">Tags (comma separated)</label>
+          <input type="text" id="sessionTags" class="form-input" placeholder="work, research">
+        </div>
+        <div class="form-actions">
+          <button type="button" id="cancelSaveBtn" class="btn-secondary">Cancel</button>
+          <button type="submit" class="btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
