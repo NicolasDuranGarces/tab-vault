@@ -13,8 +13,8 @@
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "resolveJsonModule": true,
-        "declaration": true,
-        "declarationMap": true,
+        "declaration": false,
+        "declarationMap": false,
         "sourceMap": true,
         "outDir": "./dist",
         "rootDir": "./src",
@@ -50,6 +50,8 @@
     "exclude": [
         "node_modules",
         "dist",
-        "tests"
+        "tests",
+        "src/**/__tests__",
+        "src/**/__mocks__"
     ]
 }
