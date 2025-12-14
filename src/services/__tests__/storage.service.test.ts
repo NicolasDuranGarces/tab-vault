@@ -85,7 +85,7 @@ describe('StorageService', () => {
         createMockSessionMetadata('2', 'Session 2'),
       ];
       setMockStorage({ [StorageKey.SESSION_METADATA]: mockMetadata });
-      
+
       const metadata = await storageService.getSessionMetadata();
       expect(metadata).toHaveLength(2);
       expect(metadata[0]?.name).toBe('Session 1');
@@ -118,8 +118,8 @@ describe('StorageService', () => {
 
     it('should return all sessions', async () => {
       const sessions = {
-        's1': createMockSession('s1', 'Session 1'),
-        's2': createMockSession('s2', 'Session 2'),
+        s1: createMockSession('s1', 'Session 1'),
+        s2: createMockSession('s2', 'Session 2'),
       };
       setMockStorage({ [StorageKey.SESSIONS]: sessions });
 
@@ -167,7 +167,7 @@ describe('StorageService', () => {
       const storage = getMockStorage();
       const sessions = storage[StorageKey.SESSIONS] as Record<string, Session>;
       const metadata = storage[StorageKey.SESSION_METADATA] as SessionMetadata[];
-      
+
       expect(sessions['delete-me']).toBeUndefined();
       expect(metadata.find(m => m.id === 'delete-me')).toBeUndefined();
     });
@@ -214,7 +214,7 @@ describe('StorageService', () => {
 
     it('should merge stored settings with defaults', async () => {
       setMockStorage({ [StorageKey.SETTINGS]: { theme: 'dark' } });
-      
+
       const settings = await storageService.getSettings();
       expect(settings.theme).toBe('dark');
       expect(settings.autoSaveInterval).toBe(DEFAULT_SETTINGS.autoSaveInterval);
@@ -305,7 +305,7 @@ describe('StorageService', () => {
   describe('updateStatistics', () => {
     it('should update statistics', async () => {
       await storageService.updateStatistics({ totalSessionsSaved: 5 });
-      
+
       const stats = await storageService.getStatistics();
       expect(stats.totalSessionsSaved).toBe(5);
     });

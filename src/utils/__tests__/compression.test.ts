@@ -72,10 +72,10 @@ describe('Compression Utilities', () => {
         url: `https://example.com/page/${i}`,
         title: `Page ${i} with a longer title for more data`,
       }));
-      
+
       const original = JSON.stringify(largeTabs);
       const compressed = compressTabs(largeTabs);
-      
+
       // LZ-String UTF16 usually compresses well for repetitive data
       expect(compressed.length).toBeLessThan(original.length);
     });
@@ -91,7 +91,7 @@ describe('Compression Utilities', () => {
     it('should decompress to original tabs', () => {
       const compressed = compressTabs(mockTabs);
       const decompressed = decompressTabs(compressed);
-      
+
       expect(decompressed).toHaveLength(mockTabs.length);
       expect(decompressed[0]?.url).toBe(mockTabs[0]?.url);
       expect(decompressed[1]?.pinned).toBe(mockTabs[1]?.pinned);
@@ -120,7 +120,7 @@ describe('Compression Utilities', () => {
     it('should decompress to original session', () => {
       const compressed = compressSession(mockSession);
       const decompressed = decompressSession(compressed);
-      
+
       expect(decompressed).not.toBeNull();
       expect(decompressed?.id).toBe(mockSession.id);
       expect(decompressed?.name).toBe(mockSession.name);

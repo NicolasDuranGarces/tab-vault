@@ -2,12 +2,12 @@
  * Tab Vault Manager Page Script
  */
 import { MessageType } from '@/types';
-import type { SessionMetadata, Session, Settings, Response } from '@/types';
+import type { SessionMetadata, Session, Settings } from '@/types';
 import './manager.css';
 
 // API Helper
 async function sendMessage<T>(type: MessageType, payload?: unknown): Promise<T> {
-  const response = await chrome.runtime.sendMessage({ type, payload }) as Response<T>;
+  const response = await chrome.runtime.sendMessage({ type, payload });
   if (!response.success) throw new Error(response.error || 'Unknown error');
   return response.data as T;
 }
@@ -40,7 +40,8 @@ const els = {
 
 // Helpers
 function formatDate(ts: number): string {
-  const d = new Date(ts), now = new Date();
+  const d = new Date(ts),
+    now = new Date();
   const diff = Math.floor((now.getTime() - d.getTime()) / 86400000);
   if (diff < 1) return 'Today';
   if (diff < 7) return `${diff}d ago`;
@@ -61,11 +62,16 @@ function renderSessions(list: SessionMetadata[]): void {
     return;
   }
   els.emptyState.classList.add('hidden');
-  els.sessionsGrid.innerHTML = list.map(s => `
+  els.sessionsGrid.innerHTML = list
+    .map(
+      s => `
     <div class="card" data-id="${s.id}">
       <div class="card-header">
         <div class="card-favicons">
-          ${s.faviconPreview.slice(0,4).map(f => f ? `<img src="${escapeHtml(f)}" onerror="this.style.display='none'">` : '').join('')}
+          ${s.faviconPreview
+            .slice(0, 4)
+            .map(f => (f ? `<img src="${escapeHtml(f)}" onerror="this.style.display='none'">` : ''))
+            .join('')}
         </div>
       </div>
       <div class="card-title">${escapeHtml(s.name)}</div>
@@ -73,13 +79,22 @@ function renderSessions(list: SessionMetadata[]): void {
         <span>${s.tabCount} tabs</span>
         <span>${formatDate(s.updatedAt)}</span>
       </div>
-      ${s.tags.length ? `<div class="card-tags">${s.tags.slice(0,3).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+      ${
+        s.tags.length
+          ? `<div class="card-tags">${s.tags
+              .slice(0, 3)
+              .map(t => `<span class="tag">${escapeHtml(t)}</span>`)
+              .join('')}</div>`
+          : ''
+      }
       <div class="card-actions">
         <button class="card-btn restore">Restore</button>
         <button class="card-btn delete">Delete</button>
       </div>
     </div>
-  `).join('');
+  `
+    )
+    .join('');
 }
 
 async function renderRecovery(): Promise<void> {
@@ -88,7 +103,9 @@ async function renderRecovery(): Promise<void> {
     els.recoveryList.innerHTML = '<div class="empty"><p>No recovery sessions available</p></div>';
     return;
   }
-  els.recoveryList.innerHTML = emergency.map(s => `
+  els.recoveryList.innerHTML = emergency
+    .map(
+      s => `
     <div class="list-item" data-id="${s.id}">
       <div class="list-item-info">
         <div class="list-item-title">${escapeHtml(s.name)}</div>
@@ -96,7 +113,9 @@ async function renderRecovery(): Promise<void> {
       </div>
       <button class="btn-primary" data-action="restore-emergency">Restore</button>
     </div>
-  `).join('');
+  `
+    )
+    .join('');
 }
 
 async function loadSettings(): Promise<void> {
@@ -112,7 +131,9 @@ async function updateStorage(): Promise<void> {
     const info = await chrome.storage.local.getBytesInUse(null);
     const pct = Math.min((info / (10 * 1024 * 1024)) * 100, 100);
     els.storageBar.style.width = `${pct}%`;
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 // Views
@@ -158,7 +179,9 @@ function hideModal(): void {
 // Events
 function setupEvents(): void {
   // Navigation
-  els.navItems.forEach(n => n.addEventListener('click', () => switchView((n as HTMLElement).dataset.view!)));
+  els.navItems.forEach(n =>
+    n.addEventListener('click', () => switchView((n as HTMLElement).dataset.view!))
+  );
 
   // Save button
   els.saveBtn.addEventListener('click', showModal);
@@ -169,7 +192,10 @@ function setupEvents(): void {
   els.saveForm.addEventListener('submit', async e => {
     e.preventDefault();
     const name = els.sessionName.value.trim();
-    const tags = els.sessionTags.value.split(',').map(t => t.trim()).filter(Boolean);
+    const tags = els.sessionTags.value
+      .split(',')
+      .map(t => t.trim())
+      .filter(Boolean);
     if (name) await saveSession(name, tags);
   });
 
@@ -194,9 +220,9 @@ function setupEvents(): void {
       const session = emergency.find(s => s.id === item?.dataset.id);
       if (session) {
         // Save as regular session first
-        await sendMessage(MessageType.SAVE_SESSION, { 
+        await sendMessage(MessageType.SAVE_SESSION, {
           name: session.name.replace('Emergency Backup', 'Recovered'),
-          tags: ['recovered']
+          tags: ['recovered'],
         });
       }
     }
@@ -204,7 +230,9 @@ function setupEvents(): void {
 
   // Settings changes
   els.autoSaveInterval.addEventListener('change', () => {
-    sendMessage(MessageType.UPDATE_SETTINGS, { autoSaveInterval: Number(els.autoSaveInterval.value) });
+    sendMessage(MessageType.UPDATE_SETTINGS, {
+      autoSaveInterval: Number(els.autoSaveInterval.value),
+    });
   });
   els.saveScroll.addEventListener('change', () => {
     sendMessage(MessageType.UPDATE_SETTINGS, { saveScrollPosition: els.saveScroll.checked });
@@ -223,11 +251,14 @@ function setupEvents(): void {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
       const q = els.searchInput.value.toLowerCase();
-      const filtered = q ? sessions.filter(s => 
-        s.name.toLowerCase().includes(q) || 
-        s.tags.some(t => t.includes(q)) ||
-        s.domainPreview.some(d => d.includes(q))
-      ) : sessions;
+      const filtered = q
+        ? sessions.filter(
+            s =>
+              s.name.toLowerCase().includes(q) ||
+              s.tags.some(t => t.includes(q)) ||
+              s.domainPreview.some(d => d.includes(q))
+          )
+        : sessions;
       renderSessions(filtered);
     }, 200);
   });
@@ -241,7 +272,7 @@ function setupEvents(): void {
 // Init
 async function init(): Promise<void> {
   setupEvents();
-  
+
   // Check URL params
   const params = new URLSearchParams(window.location.search);
   if (params.get('recovery')) switchView('recovery');

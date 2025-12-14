@@ -20,7 +20,7 @@ class SearchService {
    */
   private async buildIndex(): Promise<Fuse<SessionMetadata>> {
     const sessions = await storageService.getSessionMetadata();
-    
+
     this.sessionIndex = new Fuse(sessions, {
       keys: [
         { name: 'name', weight: 2 },
@@ -101,9 +101,7 @@ class SearchService {
 
       // Filter by tags
       if (searchQuery.tags && searchQuery.tags.length > 0) {
-        const hasAllTags = searchQuery.tags.every(tag =>
-          session.tags.includes(tag.toLowerCase())
-        );
+        const hasAllTags = searchQuery.tags.every(tag => session.tags.includes(tag.toLowerCase()));
         if (!hasAllTags) return false;
       }
 
@@ -251,7 +249,7 @@ class SearchService {
   async getAllTags(): Promise<string[]> {
     const sessions = await storageService.getSessionMetadata();
     const tags = new Set<string>();
-    
+
     for (const session of sessions) {
       for (const tag of session.tags) {
         tags.add(tag);
@@ -268,7 +266,7 @@ class SearchService {
   async getAllDomains(): Promise<string[]> {
     const sessions = await storageService.getSessionMetadata();
     const domains = new Set<string>();
-    
+
     for (const session of sessions) {
       for (const domain of session.domainPreview) {
         domains.add(domain);

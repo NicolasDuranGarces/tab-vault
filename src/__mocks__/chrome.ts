@@ -37,28 +37,28 @@ const chromeMock = {
       get: jest.fn((keys, callback) => {
         // Handle both promise and callback patterns
         let result: Record<string, unknown> = {};
-        
+
         if (keys === null || keys === undefined) {
           result = { ...mockStorage };
         } else if (typeof keys === 'string') {
           result = { [keys]: mockStorage[keys] };
         } else if (Array.isArray(keys)) {
-          keys.forEach((key) => {
+          keys.forEach(key => {
             result[key] = mockStorage[key];
           });
         } else {
-          Object.keys(keys).forEach((key) => {
+          Object.keys(keys).forEach(key => {
             result[key] = mockStorage[key] ?? (keys as Record<string, unknown>)[key];
           });
         }
-        
+
         if (callback) {
           chromeMock.runtime.lastError = undefined;
           callback(result);
         }
         return Promise.resolve(result);
       }),
-      
+
       set: jest.fn((items, callback) => {
         Object.assign(mockStorage, items);
         if (callback) {
@@ -67,10 +67,10 @@ const chromeMock = {
         }
         return Promise.resolve();
       }),
-      
+
       remove: jest.fn((keys, callback) => {
         const keysArray = Array.isArray(keys) ? keys : [keys];
-        keysArray.forEach((key) => {
+        keysArray.forEach(key => {
           delete mockStorage[key];
         });
         if (callback) {
@@ -79,9 +79,9 @@ const chromeMock = {
         }
         return Promise.resolve();
       }),
-      
-      clear: jest.fn((callback) => {
-        Object.keys(mockStorage).forEach((key) => {
+
+      clear: jest.fn(callback => {
+        Object.keys(mockStorage).forEach(key => {
           delete mockStorage[key];
         });
         if (callback) {
@@ -90,7 +90,7 @@ const chromeMock = {
         }
         return Promise.resolve();
       }),
-      
+
       getBytesInUse: jest.fn((_keys, callback) => {
         const bytes = JSON.stringify(mockStorage).length;
         if (callback) {
@@ -113,7 +113,7 @@ const chromeMock = {
         if (callback) callback();
         return Promise.resolve();
       }),
-      clear: jest.fn((callback) => {
+      clear: jest.fn(callback => {
         if (callback) callback();
         return Promise.resolve();
       }),
@@ -123,7 +123,7 @@ const chromeMock = {
   // Tabs API
   tabs: {
     query: jest.fn(() => Promise.resolve([])),
-    create: jest.fn((options) => {
+    create: jest.fn(options => {
       return Promise.resolve({
         id: Math.floor(Math.random() * 10000),
         url: options.url || '',
@@ -142,7 +142,7 @@ const chromeMock = {
     }),
     update: jest.fn((tabId, props) => Promise.resolve({ ...props, id: tabId })),
     remove: jest.fn(() => Promise.resolve()),
-    get: jest.fn((tabId) =>
+    get: jest.fn(tabId =>
       Promise.resolve({
         id: tabId,
         url: 'https://example.com',
@@ -177,7 +177,7 @@ const chromeMock = {
         incognito: false,
       })
     ),
-    create: jest.fn((options) =>
+    create: jest.fn(options =>
       Promise.resolve({
         id: Math.floor(Math.random() * 1000),
         focused: options?.focused ?? true,
@@ -253,7 +253,7 @@ export const mockChrome = chromeMock;
 
 // Helper to clear all storage between tests
 export function clearMockStorage(): void {
-  Object.keys(mockStorage).forEach((key) => {
+  Object.keys(mockStorage).forEach(key => {
     delete mockStorage[key];
   });
 }

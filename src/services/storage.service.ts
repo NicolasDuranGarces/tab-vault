@@ -3,14 +3,7 @@
  * Handles all Chrome Storage API interactions with type safety and error handling
  */
 
-import type {
-  Session,
-  SessionMetadata,
-  Folder,
-  Settings,
-  StorageData,
-  Statistics,
-} from '@/types';
+import type { Session, SessionMetadata, Folder, Settings, StorageData, Statistics } from '@/types';
 import { DEFAULT_SETTINGS, StorageKey } from '@/types';
 
 /**
@@ -142,7 +135,7 @@ class StorageService {
   async saveSession(session: Session): Promise<void> {
     const sessions = await this.getAllSessions();
     sessions[session.id] = session;
-    
+
     // Update metadata list
     const metadata = await this.getSessionMetadata();
     const existingIndex = metadata.findIndex(m => m.id === session.id);
@@ -159,21 +152,25 @@ class StorageService {
       isEmergency: session.isEmergency,
       version: session.version,
       faviconPreview: session.tabs.slice(0, 5).map(t => t.favicon),
-      domainPreview: [...new Set(session.tabs.slice(0, 5).map(t => {
-        try {
-          return new URL(t.url).hostname;
-        } catch {
-          return 'unknown';
-        }
-      }))],
+      domainPreview: [
+        ...new Set(
+          session.tabs.slice(0, 5).map(t => {
+            try {
+              return new URL(t.url).hostname;
+            } catch {
+              return 'unknown';
+            }
+          })
+        ),
+      ],
     };
-    
+
     if (existingIndex >= 0) {
       metadata[existingIndex] = sessionMeta;
     } else {
       metadata.unshift(sessionMeta);
     }
-    
+
     await this.set({
       [StorageKey.SESSIONS]: sessions,
       [StorageKey.SESSION_METADATA]: metadata,
@@ -188,10 +185,10 @@ class StorageService {
   async deleteSession(id: string): Promise<void> {
     const sessions = await this.getAllSessions();
     delete sessions[id];
-    
+
     const metadata = await this.getSessionMetadata();
     const filteredMetadata = metadata.filter(m => m.id !== id);
-    
+
     await this.set({
       [StorageKey.SESSIONS]: sessions,
       [StorageKey.SESSION_METADATA]: filteredMetadata,
@@ -265,10 +262,10 @@ class StorageService {
   async saveEmergencySession(session: Session, maxSessions: number): Promise<void> {
     const sessions = await this.getEmergencySessions();
     sessions.unshift(session);
-    
+
     // Keep only the last N sessions
     const trimmed = sessions.slice(0, maxSessions);
-    
+
     await this.set({ [StorageKey.EMERGENCY_SESSIONS]: trimmed });
   }
 
@@ -290,16 +287,18 @@ class StorageService {
    */
   async getStatistics(): Promise<Statistics> {
     const result = await this.get(StorageKey.STATISTICS);
-    return result[StorageKey.STATISTICS] || {
-      totalSessionsSaved: 0,
-      totalSessionsRestored: 0,
-      totalTabsSaved: 0,
-      totalTabsRestored: 0,
-      mostUsedSessions: [],
-      mostFrequentDomains: [],
-      firstUseDate: Date.now(),
-      lastUseDate: Date.now(),
-    };
+    return (
+      result[StorageKey.STATISTICS] || {
+        totalSessionsSaved: 0,
+        totalSessionsRestored: 0,
+        totalTabsSaved: 0,
+        totalTabsRestored: 0,
+        mostUsedSessions: [],
+        mostFrequentDomains: [],
+        firstUseDate: Date.now(),
+        lastUseDate: Date.now(),
+      }
+    );
   }
 
   /**

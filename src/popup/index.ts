@@ -3,7 +3,7 @@
  */
 
 import { MessageType } from '@/types';
-import type { SessionMetadata, Statistics, Response } from '@/types';
+import type { SessionMetadata, Statistics } from '@/types';
 import './styles.css';
 
 // DOM Elements
@@ -29,7 +29,7 @@ let sessions: SessionMetadata[] = [];
 
 // API
 async function sendMessage<T>(type: MessageType, payload?: unknown): Promise<T> {
-  const response = await chrome.runtime.sendMessage({ type, payload }) as Response<T>;
+  const response = await chrome.runtime.sendMessage({ type, payload });
   if (!response.success) throw new Error(response.error || 'Unknown error');
   return response.data as T;
 }
@@ -55,7 +55,7 @@ function createCard(session: SessionMetadata): HTMLElement {
   card.dataset.id = session.id;
 
   const initial = session.name.charAt(0).toUpperCase();
-  
+
   card.innerHTML = `
     <div class="session-icon">${initial}</div>
     <div class="session-info">
@@ -79,12 +79,12 @@ function createCard(session: SessionMetadata): HTMLElement {
   `;
 
   // Events
-  card.querySelector('.restore')?.addEventListener('click', (e) => {
+  card.querySelector('.restore')?.addEventListener('click', e => {
     e.stopPropagation();
     restoreSession(session.id);
   });
 
-  card.querySelector('.delete')?.addEventListener('click', (e) => {
+  card.querySelector('.delete')?.addEventListener('click', e => {
     e.stopPropagation();
     deleteSession(session.id);
   });
@@ -190,7 +190,7 @@ function hideModal(): void {
 function setupEvents(): void {
   // Buttons
   elements.saveSessionBtn.addEventListener('click', showModal);
-  
+
   elements.openManagerBtn.addEventListener('click', () => {
     chrome.tabs.create({ url: chrome.runtime.getURL('manager.html') });
     window.close();
@@ -205,15 +205,18 @@ function setupEvents(): void {
   elements.cancelSaveBtn.addEventListener('click', hideModal);
   elements.saveModal.querySelector('.modal-overlay')?.addEventListener('click', hideModal);
 
-  elements.saveForm.addEventListener('submit', async (e) => {
+  elements.saveForm.addEventListener('submit', async e => {
     e.preventDefault();
     const name = elements.sessionName.value.trim();
-    const tags = elements.sessionTags.value.split(',').map(t => t.trim()).filter(Boolean);
+    const tags = elements.sessionTags.value
+      .split(',')
+      .map(t => t.trim())
+      .filter(Boolean);
     if (name) await saveSession(name, tags);
   });
 
   // Keyboard
-  document.addEventListener('keydown', (e) => {
+  document.addEventListener('keydown', e => {
     if (e.key === 'Escape') hideModal();
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
       e.preventDefault();

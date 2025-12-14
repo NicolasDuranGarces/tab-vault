@@ -36,7 +36,7 @@ chrome.runtime.onInstalled.addListener(async details => {
  */
 chrome.runtime.onStartup.addListener(async () => {
   await crashRecoveryService.initialize();
-  
+
   // Check if a crash was detected
   const wasCrash = await crashRecoveryService.wasCrashDetected();
   if (wasCrash) {
@@ -86,7 +86,7 @@ chrome.commands.onCommand.addListener(async command => {
       case 'save-session': {
         const timestamp = new Date().toLocaleString();
         await sessionService.createSession(`Quick Save - ${timestamp}`);
-        
+
         const settings = await storageService.getSettings();
         if (settings.showNotifications) {
           await chrome.notifications.create({
@@ -98,7 +98,7 @@ chrome.commands.onCommand.addListener(async command => {
         }
         break;
       }
-      
+
       case 'restore-last': {
         const sessions = await storageService.getSessionMetadata();
         if (sessions.length > 0 && sessions[0]) {
@@ -133,7 +133,7 @@ chrome.runtime.onMessage.addListener((message: Message, _sender, sendResponse) =
     .catch(error => {
       sendResponse({ success: false, error: error.message });
     });
-  
+
   // Return true to indicate async response
   return true;
 });
@@ -146,7 +146,12 @@ async function handleMessage(message: Message): Promise<Response> {
     switch (message.type) {
       // ========== SESSION OPERATIONS ==========
       case MessageType.SAVE_SESSION: {
-        const payload = message.payload as { name: string; description?: string; tags?: string[]; folderId?: string };
+        const payload = message.payload as {
+          name: string;
+          description?: string;
+          tags?: string[];
+          folderId?: string;
+        };
         const session = await sessionService.createSession(payload.name, payload);
         searchService.invalidateCache();
         return { success: true, data: session };
@@ -256,12 +261,12 @@ async function handleMessage(message: Message): Promise<Response> {
       case MessageType.UPDATE_SETTINGS: {
         const payload = message.payload as Record<string, unknown>;
         await storageService.saveSettings(payload);
-        
+
         // Update crash recovery alarm if interval changed
         if ('autoSaveInterval' in payload) {
           await crashRecoveryService.startEmergencyBackupAlarm(payload.autoSaveInterval as number);
         }
-        
+
         return { success: true };
       }
 
@@ -269,13 +274,13 @@ async function handleMessage(message: Message): Promise<Response> {
       case MessageType.EXPORT_SESSIONS: {
         const payload = message.payload as { sessionIds?: string[]; includeSettings?: boolean };
         let blob: Blob;
-        
+
         if (payload.sessionIds && payload.sessionIds.length > 0) {
           blob = await backupService.exportSessionsToJSON(payload.sessionIds);
         } else {
           blob = await backupService.exportToJSON(payload.includeSettings);
         }
-        
+
         // Convert blob to base64 for transfer
         const reader = new FileReader();
         const base64 = await new Promise<string>((resolve, reject) => {
@@ -283,7 +288,7 @@ async function handleMessage(message: Message): Promise<Response> {
           reader.onerror = reject;
           reader.readAsDataURL(blob);
         });
-        
+
         return { success: true, data: base64 };
       }
 
@@ -315,9 +320,9 @@ async function handleMessage(message: Message): Promise<Response> {
     }
   } catch (error) {
     console.error('Message handler error:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }
@@ -340,7 +345,7 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-chrome.contextMenus.onClicked.addListener(async (info) => {
+chrome.contextMenus.onClicked.addListener(async info => {
   switch (info.menuItemId) {
     case 'save-session': {
       const timestamp = new Date().toLocaleString();

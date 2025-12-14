@@ -22,14 +22,14 @@ class CrashRecoveryService {
    */
   async initialize(): Promise<void> {
     const settings = await storageService.getSettings();
-    
+
     if (!settings.crashRecoveryEnabled) {
       return;
     }
 
     // Check if this is a recovery situation
     const wasCleanShutdown = await this.wasCleanShutdown();
-    
+
     if (!wasCleanShutdown) {
       // Mark that we detected a potential crash
       await this.markPotentialCrash();
@@ -75,9 +75,9 @@ class CrashRecoveryService {
    * Marks that a potential crash was detected
    */
   private async markPotentialCrash(): Promise<void> {
-    await chrome.storage.local.set({ 
+    await chrome.storage.local.set({
       potential_crash_detected: true,
-      crash_detected_at: Date.now()
+      crash_detected_at: Date.now(),
     });
   }
 
@@ -130,9 +130,9 @@ class CrashRecoveryService {
   async performEmergencyBackup(): Promise<Session | null> {
     try {
       const session = await sessionService.createEmergencySession();
-      
+
       await chrome.storage.local.set({
-        [LAST_BACKUP_KEY]: Date.now()
+        [LAST_BACKUP_KEY]: Date.now(),
       });
 
       return session;
@@ -183,7 +183,7 @@ class CrashRecoveryService {
   async performCleanShutdown(): Promise<void> {
     // Perform one last backup
     await this.performEmergencyBackup();
-    
+
     // Clear the running flag
     await this.clearRunningFlag();
   }
