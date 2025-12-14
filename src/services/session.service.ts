@@ -202,8 +202,8 @@ class SessionService {
       const settings = await storageService.getSettings();
       if (settings.detectDuplicates) {
         const currentTabs = await tabService.captureCurrentWindowTabs(settings);
-        const currentUrls = new Set(currentTabs.map(t => t.url));
-        tabsToRestore = tabsToRestore.filter(t => !currentUrls.has(t.url));
+        const currentUrls = currentTabs.map(t => t.url);
+        tabsToRestore = tabsToRestore.filter(t => !currentUrls.some(cu => this.isUrlMatch(t.url, cu)));
       }
 
       const createdTabIds = await tabService.restoreTabs(tabsToRestore, restoreOptions);
@@ -219,6 +219,8 @@ class SessionService {
         totalTabsRestored: stats.totalTabsRestored + createdTabIds.length,
         lastUseDate: now(),
       });
+
+      await tabService.cycleTabs(createdTabIds);
 
       return createdTabIds;
     } finally {
@@ -425,12 +427,12 @@ class SessionService {
       const settings = await storageService.getSettings();
       if (settings.detectDuplicates) {
         const currentTabs = await tabService.captureCurrentWindowTabs(settings);
-        const currentUrls = new Set(currentTabs.map(t => t.url));
-        tabsToRestore = tabsToRestore.filter(t => !currentUrls.has(t.url));
+        const currentUrls = currentTabs.map(t => t.url);
+        tabsToRestore = tabsToRestore.filter(t => !currentUrls.some(cu => this.isUrlMatch(t.url, cu)));
       }
 
       const createdTabIds = await tabService.restoreTabs(tabsToRestore, restoreOptions);
-
+      
       // Update statistics
       const stats = await storageService.getStatistics();
       await storageService.updateStatistics({
@@ -438,6 +440,10 @@ class SessionService {
         totalTabsRestored: stats.totalTabsRestored + createdTabIds.length,
         lastUseDate: now(),
       });
+
+      // If we await cycle, the button stays "Restoring..." during cycle.
+      // This is good feedback.
+      await tabService.cycleTabs(createdTabIds);
 
       return createdTabIds;
     } finally {
@@ -450,6 +456,17 @@ class SessionService {
    */
   async deleteAllEmergencySessions(): Promise<void> {
     await storageService.clearEmergencySessions();
+  }
+
+  private isUrlMatch(url1: string, url2: string): boolean {
+    try {
+      // Normalize by removing trailing slash and lowercase
+      const u1 = url1.toLowerCase().replace(/\/$/, '');
+      const u2 = url2.toLowerCase().replace(/\/$/, '');
+      return u1 === u2;
+    } catch {
+      return url1 === url2;
+    }
   }
 }
 

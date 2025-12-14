@@ -250,6 +250,41 @@ class TabService {
   }
 
   /**
+   * Cycles through tabs to force them to load
+   * @param tabIds - IDs of tabs to cycle
+   */
+  async cycleTabs(tabIds: number[]): Promise<void> {
+    if (tabIds.length === 0) return;
+
+    // Get currently active tab to restore it later
+    const current = await chrome.tabs.query({ active: true, currentWindow: true });
+    const originalActiveId = current[0]?.id;
+
+    for (const id of tabIds) {
+      try {
+        await chrome.tabs.update(id, { active: true });
+        // Short dwell to trigger load
+        await new Promise(resolve => setTimeout(resolve, 150));
+      } catch (error) {
+        // Tab might be closed
+      }
+    }
+
+    // Restore original active tab if it's still open
+    if (originalActiveId !== undefined) {
+      try {
+        await chrome.tabs.update(originalActiveId as number, { active: true });
+      } catch {
+        // Original tab might be closed
+        if (tabIds.length > 0) {
+          // Activate the last restored tab
+          await chrome.tabs.update(tabIds[tabIds.length - 1] as number, { active: true });
+        }
+      }
+    }
+  }
+
+  /**
    * Stores pending restore data (scroll/form) for a tab
    */
   private async setPendingRestoreData(
