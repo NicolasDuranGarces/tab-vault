@@ -7,12 +7,14 @@
     "tabs",
     "storage",
     "alarms",
-    "scripting"
+    "notifications",
+    "contextMenus"
   ],
   "optional_permissions": [
-    "tabGroups"
+    "tabGroups",
+    "scripting"
   ],
-  "host_permissions": [
+  "optional_host_permissions": [
     "<all_urls>"
   ],
   "background": {
