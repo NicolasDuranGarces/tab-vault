@@ -444,6 +444,13 @@ class SessionService {
       this.restoringSessions.delete(id);
     }
   }
+
+  /**
+   * Deletes all emergency sessions
+   */
+  async deleteAllEmergencySessions(): Promise<void> {
+    await storageService.clearEmergencySessions();
+  }
 }
 
 // Export singleton instance

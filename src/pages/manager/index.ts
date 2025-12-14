@@ -76,6 +76,8 @@ const els = {
   confirmMessage: document.getElementById('confirmMessage')!,
   cancelConfirmBtn: document.getElementById('cancelConfirmBtn')!,
   doConfirmBtn: document.getElementById('doConfirmBtn')!,
+  // Recovery
+  clearRecoveryBtn: document.getElementById('clearRecoveryBtn') as HTMLButtonElement,
 };
 
 // Helpers
@@ -140,10 +142,14 @@ function renderSessions(list: SessionMetadata[]): void {
 
 async function renderRecovery(): Promise<void> {
   const emergency = await sendMessage<Session[]>(MessageType.GET_EMERGENCY_SESSIONS);
+  
   if (emergency.length === 0) {
     els.recoveryList.innerHTML = '<div class="empty"><p>No recovery sessions available</p></div>';
+    els.clearRecoveryBtn.classList.add('hidden');
     return;
   }
+  
+  els.clearRecoveryBtn.classList.remove('hidden');
   els.recoveryList.innerHTML = emergency
     .map(
       s => `
@@ -448,6 +454,23 @@ function setupEvents(): void {
         btn.textContent = originalText;
         btn.classList.remove('loading');
       }
+    }
+  });
+
+  // Clear Recovery
+  els.clearRecoveryBtn.addEventListener('click', async () => {
+    const confirmed = await confirmAction(
+      'Delete All Backups',
+      'Are you sure you want to delete ALL emergency backups? This action cannot be undone.'
+    );
+    if (!confirmed) return;
+
+    try {
+      await sendMessage(MessageType.CLEAR_EMERGENCY_SESSIONS);
+      await renderRecovery();
+    } catch (error) {
+      console.error('Failed to clear emergency sessions:', error);
+      alert('Failed to clear backups');
     }
   });
 
