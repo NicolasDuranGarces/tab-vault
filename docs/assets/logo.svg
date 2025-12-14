@@ -1,0 +1,31 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="vaultGradient" x1="256" y1="100" x2="256" y2="450" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1E3A5F" />
+      <stop offset="1" stop-color="#3B82F6" />
+    </linearGradient>
+    <linearGradient id="lockGradient" x1="256" y1="220" x2="256" y2="340" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#06B6D4" />
+      <stop offset="1" stop-color="#3B82F6" />
+    </linearGradient>
+  </defs>
+
+  <path d="M350 100H162C150.954 100 142 108.954 142 120V150H370V120C370 108.954 361.046 100 350 100Z" fill="#3B82F6" fill-opacity="0.5"/>
+
+  <path d="M310 60H202C190.954 60 182 68.954 182 80V150H330V80C330 68.954 321.046 60 310 60Z" fill="#06B6D4"/>
+
+  <rect x="86" y="140" width="340" height="310" rx="40" fill="url(#vaultGradient)"/>
+  
+  <rect x="86" y="140" width="340" height="310" rx="40" stroke="#1E3A5F" stroke-width="8"/>
+
+  <circle cx="256" cy="295" r="60" fill="#1E3A5F"/>
+  <circle cx="256" cy="295" r="45" fill="url(#lockGradient)"/>
+  
+  <rect x="251" y="275" width="10" height="40" rx="5" fill="#FFFFFF"/>
+  <circle cx="256" cy="295" r="8" fill="#FFFFFF"/>
+  
+  <circle cx="140" cy="190" r="10" fill="#06B6D4" fill-opacity="0.6"/>
+  <circle cx="180" cy="190" r="10" fill="#06B6D4" fill-opacity="0.6"/>
+  <circle cx="220" cy="190" r="10" fill="#06B6D4" fill-opacity="0.6"/>
+
+</svg>
