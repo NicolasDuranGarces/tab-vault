@@ -74,7 +74,7 @@
         </main>
     </div>
 
-    <!-- Modals -->
+    <!-- Save Modal -->
     <div id="saveModal" class="modal hidden">
         <div class="modal-bg"></div>
         <div class="modal-box">
@@ -85,6 +85,39 @@
                 <div class="btns">
                     <button type="button" class="btn-cancel">Cancel</button>
                     <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Session Modal -->
+    <div id="editModal" class="modal hidden">
+        <div class="modal-bg"></div>
+        <div class="modal-box modal-box-large">
+            <div class="modal-header">
+                <h3>Edit Session</h3>
+                <button type="button" class="modal-close" id="closeEditModal">&times;</button>
+            </div>
+            <form id="editForm">
+                <div class="form-group">
+                    <label for="editName">Name</label>
+                    <input type="text" id="editName" placeholder="Session name" required>
+                </div>
+                <div class="form-group">
+                    <label for="editDescription">Description</label>
+                    <textarea id="editDescription" placeholder="Optional description" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editTags">Tags</label>
+                    <input type="text" id="editTags" placeholder="Tags (comma separated)">
+                </div>
+                <div class="form-group">
+                    <label>Tabs (<span id="editTabCount">0</span>)</label>
+                    <div id="editTabsList" class="tabs-list"></div>
+                </div>
+                <div class="btns">
+                    <button type="button" class="btn-cancel" id="cancelEditBtn">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Changes</button>
                 </div>
             </form>
         </div>

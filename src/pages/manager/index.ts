@@ -59,6 +59,16 @@ const els = {
   saveForm2: document.getElementById('saveForm') as HTMLInputElement,
   lazyRestore: document.getElementById('lazyRestore') as HTMLInputElement,
   theme: document.getElementById('theme') as HTMLSelectElement,
+  // Edit Modal
+  editModal: document.getElementById('editModal')!,
+  editForm: document.getElementById('editForm') as HTMLFormElement,
+  editName: document.getElementById('editName') as HTMLInputElement,
+  editDescription: document.getElementById('editDescription') as HTMLTextAreaElement,
+  editTags: document.getElementById('editTags') as HTMLInputElement,
+  editTabsList: document.getElementById('editTabsList')!,
+  editTabCount: document.getElementById('editTabCount')!,
+  closeEditModal: document.getElementById('closeEditModal')!,
+  cancelEditBtn: document.getElementById('cancelEditBtn')!,
 };
 
 // Helpers
@@ -111,6 +121,7 @@ function renderSessions(list: SessionMetadata[]): void {
           : ''
       }
       <div class="card-actions">
+        <button class="card-btn edit">Edit</button>
         <button class="card-btn restore">Restore</button>
         <button class="card-btn delete">Delete</button>
       </div>
@@ -199,6 +210,115 @@ function hideModal(): void {
   els.saveModal.classList.add('hidden');
 }
 
+// ============================================================================
+// EDIT SESSION MODAL
+// ============================================================================
+let currentEditSession: Session | null = null;
+let editedTabs: Session['tabs'] = [];
+
+async function openEditModal(id: string): Promise<void> {
+  try {
+    const session = await sendMessage<Session>(MessageType.GET_SESSION, { id });
+    if (!session) {
+      alert('Session not found');
+      return;
+    }
+
+    currentEditSession = session;
+    editedTabs = [...session.tabs];
+
+    // Populate form
+    els.editName.value = session.name;
+    els.editDescription.value = session.description || '';
+    els.editTags.value = session.tags.join(', ');
+
+    // Render tabs
+    renderEditTabs();
+
+    // Show modal
+    els.editModal.classList.remove('hidden');
+    els.editName.focus();
+  } catch (error) {
+    console.error('Failed to load session for editing:', error);
+    alert('Failed to load session');
+  }
+}
+
+function renderEditTabs(): void {
+  els.editTabCount.textContent = editedTabs.length.toString();
+  els.editTabsList.innerHTML = editedTabs
+    .map(
+      (tab, index) => `
+    <div class="tab-item" data-index="${index}">
+      <img src="${escapeHtml(tab.favicon || '')}" onerror="this.style.display='none'">
+      <div class="tab-item-info">
+        <div class="tab-item-title">${escapeHtml(tab.title)}</div>
+        <div class="tab-item-url">${escapeHtml(tab.url)}</div>
+      </div>
+      <button type="button" class="tab-item-remove" data-index="${index}">&times;</button>
+    </div>
+  `
+    )
+    .join('');
+
+  // Add remove listeners
+  els.editTabsList.querySelectorAll('.tab-item-remove').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      const index = parseInt((btn as HTMLElement).dataset.index!, 10);
+      removeTabFromEdit(index);
+    });
+  });
+}
+
+function removeTabFromEdit(index: number): void {
+  editedTabs.splice(index, 1);
+  renderEditTabs();
+}
+
+function hideEditModal(): void {
+  els.editModal.classList.add('hidden');
+  currentEditSession = null;
+  editedTabs = [];
+}
+
+async function saveEditSession(): Promise<void> {
+  if (!currentEditSession) return;
+
+  const name = els.editName.value.trim();
+  const description = els.editDescription.value.trim();
+  const tags = els.editTags.value
+    .split(',')
+    .map(t => t.trim())
+    .filter(Boolean);
+
+  if (!name) {
+    alert('Name is required');
+    return;
+  }
+
+  try {
+    await sendMessage(MessageType.UPDATE_SESSION, {
+      id: currentEditSession.id,
+      updates: {
+        name,
+        description,
+        tags,
+        tabs: editedTabs,
+        tabCount: editedTabs.length,
+      },
+    });
+
+    // Refresh sessions list
+    sessions = await sendMessage<SessionMetadata[]>(MessageType.GET_SESSIONS);
+    renderSessions(sessions);
+    hideEditModal();
+  } catch (error) {
+    console.error('Failed to save session:', error);
+    alert('Failed to save changes');
+  }
+}
+
 // Events
 function setupEvents(): void {
   // Navigation
@@ -222,15 +342,24 @@ function setupEvents(): void {
     if (name) await saveSession(name, tags);
   });
 
+  // Edit Modal
+  els.editModal.querySelector('.modal-bg')?.addEventListener('click', hideEditModal);
+  els.closeEditModal.addEventListener('click', hideEditModal);
+  els.cancelEditBtn.addEventListener('click', hideEditModal);
+  els.editForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    await saveEditSession();
+  });
+
   // Grid clicks
   els.sessionsGrid.addEventListener('click', async e => {
     const target = e.target as HTMLElement;
     const card = target.closest('.card') as HTMLElement;
     if (!card) return;
     const id = card.dataset.id!;
-    if (target.classList.contains('restore')) await restoreSession(id);
+    if (target.classList.contains('edit')) await openEditModal(id);
+    else if (target.classList.contains('restore')) await restoreSession(id);
     else if (target.classList.contains('delete')) await deleteSession(id);
-    else await restoreSession(id);
   });
 
   // Recovery clicks
