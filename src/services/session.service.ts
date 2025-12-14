@@ -407,7 +407,22 @@ class SessionService {
       }
 
       const restoreOptions: RestoreOptions = { ...DEFAULT_RESTORE_OPTIONS, ...options };
-      const createdTabIds = await tabService.restoreTabs(session.tabs, restoreOptions);
+
+      // Filter tabs if specific IDs are provided
+      let tabsToRestore = session.tabs;
+      if (restoreOptions.tabIds) {
+        tabsToRestore = session.tabs.filter(t => restoreOptions.tabIds?.includes(t.id));
+      }
+
+      // Detect duplicates if enabled
+      const settings = await storageService.getSettings();
+      if (settings.detectDuplicates) {
+        const currentTabs = await tabService.captureCurrentWindowTabs(settings);
+        const currentUrls = new Set(currentTabs.map(t => t.url));
+        tabsToRestore = tabsToRestore.filter(t => !currentUrls.has(t.url));
+      }
+
+      const createdTabIds = await tabService.restoreTabs(tabsToRestore, restoreOptions);
 
       // Update statistics
       const stats = await storageService.getStatistics();
