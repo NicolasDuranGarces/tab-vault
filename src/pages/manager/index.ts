@@ -384,15 +384,24 @@ function setupEvents(): void {
     const target = e.target as HTMLElement;
     if (target.dataset.action === 'restore-emergency') {
       const item = target.closest('.list-item') as HTMLElement;
-      // For emergency, we need to get full session and restore
-      const emergency = await sendMessage<Session[]>(MessageType.GET_EMERGENCY_SESSIONS);
-      const session = emergency.find(s => s.id === item?.dataset.id);
-      if (session) {
-        // Save as regular session first
-        await sendMessage(MessageType.SAVE_SESSION, {
-          name: session.name.replace('Emergency Backup', 'Recovered'),
-          tags: ['recovered'],
-        });
+      if (!item) return;
+      const id = item.dataset.id!;
+      const btn = target as HTMLButtonElement;
+
+      const originalText = btn.textContent || 'Restore';
+      btn.disabled = true;
+      btn.textContent = 'Restoring...';
+      btn.classList.add('loading');
+
+      try {
+        await sendMessage(MessageType.RESTORE_EMERGENCY_SESSION, { id });
+      } catch (error) {
+        console.error('Failed to restore emergency session:', error);
+        alert('Failed to restore session');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+        btn.classList.remove('loading');
       }
     }
   });

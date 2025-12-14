@@ -385,6 +385,43 @@ class SessionService {
     await storageService.saveEmergencySession(session, settings.maxEmergencySessions);
     return session;
   }
+
+  /**
+   * Restores an emergency session without saving it to the main list
+   * @param id - Emergency session ID
+   * @param options - Restore options
+   * @returns Array of created tab IDs
+   */
+  async restoreEmergencySession(id: string, options: Partial<RestoreOptions> = {}): Promise<number[]> {
+    if (this.restoringSessions.has(id)) {
+      console.warn('Session restore already in progress for:', id);
+      return [];
+    }
+    this.restoringSessions.add(id);
+
+    try {
+      const emergencySessions = await storageService.getEmergencySessions();
+      const session = emergencySessions.find(s => s.id === id);
+      if (!session) {
+        throw new Error('Emergency session not found');
+      }
+
+      const restoreOptions: RestoreOptions = { ...DEFAULT_RESTORE_OPTIONS, ...options };
+      const createdTabIds = await tabService.restoreTabs(session.tabs, restoreOptions);
+
+      // Update statistics
+      const stats = await storageService.getStatistics();
+      await storageService.updateStatistics({
+        totalSessionsRestored: stats.totalSessionsRestored + 1,
+        totalTabsRestored: stats.totalTabsRestored + createdTabIds.length,
+        lastUseDate: now(),
+      });
+
+      return createdTabIds;
+    } finally {
+      this.restoringSessions.delete(id);
+    }
+  }
 }
 
 // Export singleton instance

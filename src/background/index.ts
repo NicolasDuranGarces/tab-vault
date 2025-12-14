@@ -220,6 +220,12 @@ async function handleMessage(message: Message): Promise<Response> {
         return { success: true, data: sessions };
       }
 
+      case MessageType.RESTORE_EMERGENCY_SESSION: {
+        const payload = message.payload as { id: string; options?: Partial<RestoreOptions> };
+        const tabIds = await sessionService.restoreEmergencySession(payload.id, payload.options);
+        return { success: true, data: tabIds };
+      }
+
       // ========== FOLDER OPERATIONS ==========
       case MessageType.GET_FOLDERS: {
         const folders = await storageService.getFolders();

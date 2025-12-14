@@ -286,6 +286,7 @@ export enum MessageType {
 
   // Statistics
   GET_STATISTICS = 'GET_STATISTICS',
+  RESTORE_EMERGENCY_SESSION = 'RESTORE_EMERGENCY_SESSION',
 
   // Crash recovery
   CHECK_CRASH = 'CHECK_CRASH',
