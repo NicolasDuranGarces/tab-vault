@@ -27,11 +27,36 @@ const elements = {
 
 let sessions: SessionMetadata[] = [];
 
-// API
+// API - with retry for service worker wake-up
 async function sendMessage<T>(type: MessageType, payload?: unknown): Promise<T> {
-  const response = await chrome.runtime.sendMessage({ type, payload });
-  if (!response.success) throw new Error(response.error || 'Unknown error');
-  return response.data as T;
+  const maxRetries = 3;
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await chrome.runtime.sendMessage({ type, payload });
+
+      // Handle undefined response (service worker not ready)
+      if (response === undefined) {
+        throw new Error('No response from background');
+      }
+
+      if (!response.success) {
+        throw new Error(response.error || 'Unknown error');
+      }
+
+      return response.data as T;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Unknown error');
+
+      // Wait before retry (exponential backoff)
+      if (attempt < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)));
+      }
+    }
+  }
+
+  throw lastError || new Error('Failed to communicate with background');
 }
 
 // Format date
@@ -81,15 +106,15 @@ function createCard(session: SessionMetadata): HTMLElement {
   // Events
   card.querySelector('.restore')?.addEventListener('click', e => {
     e.stopPropagation();
-    restoreSession(session.id);
+    void restoreSession(session.id);
   });
 
   card.querySelector('.delete')?.addEventListener('click', e => {
     e.stopPropagation();
-    deleteSession(session.id);
+    void deleteSession(session.id);
   });
 
-  card.addEventListener('click', () => restoreSession(session.id));
+  card.addEventListener('click', () => void restoreSession(session.id));
 
   return card;
 }
@@ -192,12 +217,12 @@ function setupEvents(): void {
   elements.saveSessionBtn.addEventListener('click', showModal);
 
   elements.openManagerBtn.addEventListener('click', () => {
-    chrome.tabs.create({ url: chrome.runtime.getURL('manager.html') });
+    void chrome.tabs.create({ url: chrome.runtime.getURL('manager.html') });
     window.close();
   });
 
   elements.settingsBtn.addEventListener('click', () => {
-    chrome.tabs.create({ url: chrome.runtime.getURL('manager.html?tab=settings') });
+    void chrome.tabs.create({ url: chrome.runtime.getURL('manager.html?tab=settings') });
     window.close();
   });
 

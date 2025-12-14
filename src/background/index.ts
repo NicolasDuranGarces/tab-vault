@@ -124,6 +124,17 @@ chrome.tabs.onActivated.addListener(async activeInfo => {
 });
 
 // ============================================================================
+// TAB LOAD COMPLETE HANDLER (for scroll/form restore)
+// ============================================================================
+
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
+  // Only trigger when page finishes loading
+  if (changeInfo.status === 'complete') {
+    await tabService.restorePendingData(tabId);
+  }
+});
+
+// ============================================================================
 // MESSAGE HANDLERS
 // ============================================================================
 
@@ -207,6 +218,12 @@ async function handleMessage(message: Message): Promise<Response> {
         const sessions = await sessionService.splitSession(payload.id);
         searchService.invalidateCache();
         return { success: true, data: sessions };
+      }
+
+      case MessageType.RESTORE_EMERGENCY_SESSION: {
+        const payload = message.payload as { id: string; options?: Partial<RestoreOptions> };
+        const tabIds = await sessionService.restoreEmergencySession(payload.id, payload.options);
+        return { success: true, data: tabIds };
       }
 
       // ========== FOLDER OPERATIONS ==========

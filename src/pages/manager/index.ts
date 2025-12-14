@@ -5,11 +5,34 @@ import { MessageType } from '@/types';
 import type { SessionMetadata, Session, Settings } from '@/types';
 import './manager.css';
 
-// API Helper
+// API Helper with retry for service worker wake-up
 async function sendMessage<T>(type: MessageType, payload?: unknown): Promise<T> {
-  const response = await chrome.runtime.sendMessage({ type, payload });
-  if (!response.success) throw new Error(response.error || 'Unknown error');
-  return response.data as T;
+  const maxRetries = 3;
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await chrome.runtime.sendMessage({ type, payload });
+
+      if (response === undefined) {
+        throw new Error('No response from background');
+      }
+
+      if (!response.success) {
+        throw new Error(response.error || 'Unknown error');
+      }
+
+      return response.data as T;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Unknown error');
+
+      if (attempt < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)));
+      }
+    }
+  }
+
+  throw lastError || new Error('Failed to communicate with background');
 }
 
 // State
@@ -21,6 +44,7 @@ const els = {
   sessionsGrid: document.getElementById('sessionsGrid')!,
   emptyState: document.getElementById('emptyState')!,
   searchInput: document.getElementById('searchInput') as HTMLInputElement,
+  tagFilter: document.getElementById('tagFilter') as HTMLSelectElement,
   saveBtn: document.getElementById('saveBtn')!,
   saveModal: document.getElementById('saveModal')!,
   saveForm: document.getElementById('saveForm') as HTMLFormElement,
@@ -33,9 +57,28 @@ const els = {
   // Settings
   autoSaveInterval: document.getElementById('autoSaveInterval') as HTMLSelectElement,
   saveScroll: document.getElementById('saveScroll') as HTMLInputElement,
-  saveForm2: document.getElementById('saveForm') as HTMLInputElement,
+  saveFormData: document.getElementById('saveFormData') as HTMLInputElement,
   lazyRestore: document.getElementById('lazyRestore') as HTMLInputElement,
+  clearPreviousTabs: document.getElementById('clearPreviousTabs') as HTMLInputElement,
   theme: document.getElementById('theme') as HTMLSelectElement,
+  // Edit Modal
+  editModal: document.getElementById('editModal')!,
+  editForm: document.getElementById('editForm') as HTMLFormElement,
+  editName: document.getElementById('editName') as HTMLInputElement,
+  editDescription: document.getElementById('editDescription') as HTMLTextAreaElement,
+  editTags: document.getElementById('editTags') as HTMLInputElement,
+  editTabsList: document.getElementById('editTabsList')!,
+  editTabCount: document.getElementById('editTabCount')!,
+  closeEditModal: document.getElementById('closeEditModal')!,
+  cancelEditBtn: document.getElementById('cancelEditBtn')!,
+  // Confirm Modal
+  confirmModal: document.getElementById('confirmModal')!,
+  confirmTitle: document.getElementById('confirmTitle')!,
+  confirmMessage: document.getElementById('confirmMessage')!,
+  cancelConfirmBtn: document.getElementById('cancelConfirmBtn')!,
+  doConfirmBtn: document.getElementById('doConfirmBtn')!,
+  // Recovery
+  clearRecoveryBtn: document.getElementById('clearRecoveryBtn') as HTMLButtonElement,
 };
 
 // Helpers
@@ -88,6 +131,7 @@ function renderSessions(list: SessionMetadata[]): void {
           : ''
       }
       <div class="card-actions">
+        <button class="card-btn edit">Edit</button>
         <button class="card-btn restore">Restore</button>
         <button class="card-btn delete">Delete</button>
       </div>
@@ -99,10 +143,14 @@ function renderSessions(list: SessionMetadata[]): void {
 
 async function renderRecovery(): Promise<void> {
   const emergency = await sendMessage<Session[]>(MessageType.GET_EMERGENCY_SESSIONS);
+
   if (emergency.length === 0) {
     els.recoveryList.innerHTML = '<div class="empty"><p>No recovery sessions available</p></div>';
+    els.clearRecoveryBtn.classList.add('hidden');
     return;
   }
+
+  els.clearRecoveryBtn.classList.remove('hidden');
   els.recoveryList.innerHTML = emergency
     .map(
       s => `
@@ -122,7 +170,9 @@ async function loadSettings(): Promise<void> {
   const settings = await sendMessage<Settings>(MessageType.GET_SETTINGS);
   els.autoSaveInterval.value = String(settings.autoSaveInterval);
   els.saveScroll.checked = settings.saveScrollPosition;
+  els.saveFormData.checked = settings.saveFormData;
   els.lazyRestore.checked = settings.lazyRestore;
+  els.clearPreviousTabs.checked = settings.clearPreviousTabs;
   els.theme.value = settings.theme;
 }
 
@@ -141,8 +191,8 @@ function switchView(view: string): void {
   els.navItems.forEach(n => n.classList.toggle('active', (n as HTMLElement).dataset.view === view));
   els.views.forEach(v => v.classList.toggle('active', v.id === `${view}View`));
   els.viewTitle.textContent = view.charAt(0).toUpperCase() + view.slice(1);
-  if (view === 'recovery') renderRecovery();
-  if (view === 'settings') loadSettings();
+  if (view === 'recovery') void renderRecovery();
+  if (view === 'settings') void loadSettings();
 }
 
 // Actions
@@ -153,15 +203,70 @@ async function saveSession(name: string, tags: string[]): Promise<void> {
   hideModal();
 }
 
-async function restoreSession(id: string): Promise<void> {
-  await sendMessage(MessageType.RESTORE_SESSION, { id });
+async function restoreSession(id: string, btn?: HTMLButtonElement): Promise<void> {
+  let originalText = '';
+  if (btn) {
+    btn.disabled = true;
+    originalText = btn.textContent || '';
+    btn.textContent = 'Restoring...';
+    btn.classList.add('loading');
+  }
+
+  try {
+    await sendMessage(MessageType.RESTORE_SESSION, { id });
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = originalText;
+      btn.classList.remove('loading');
+    }
+  }
 }
 
 async function deleteSession(id: string): Promise<void> {
-  if (!confirm('Delete this session?')) return;
-  await sendMessage(MessageType.DELETE_SESSION, { id });
-  sessions = sessions.filter(s => s.id !== id);
-  renderSessions(sessions);
+  const confirmed = await confirmAction(
+    'Delete Session',
+    'Are you sure you want to delete this session? This action cannot be undone.'
+  );
+  if (!confirmed) return;
+
+  try {
+    await sendMessage(MessageType.DELETE_SESSION, { id });
+    sessions = sessions.filter(s => s.id !== id);
+    renderSessions(sessions);
+  } catch (error) {
+    console.error('Failed to delete session:', error);
+    alert('Failed to delete session');
+  }
+}
+
+async function confirmAction(title: string, message: string): Promise<boolean> {
+  return new Promise(resolve => {
+    els.confirmTitle.textContent = title;
+    els.confirmMessage.textContent = message;
+    els.confirmModal.classList.remove('hidden');
+
+    const cleanup = () => {
+      els.confirmModal.classList.add('hidden');
+      els.doConfirmBtn.removeEventListener('click', onConfirm);
+      els.cancelConfirmBtn.removeEventListener('click', onCancel);
+      els.confirmModal.querySelector('.modal-bg')?.removeEventListener('click', onCancel);
+    };
+
+    const onConfirm = () => {
+      cleanup();
+      resolve(true);
+    };
+
+    const onCancel = () => {
+      cleanup();
+      resolve(false);
+    };
+
+    els.doConfirmBtn.addEventListener('click', onConfirm);
+    els.cancelConfirmBtn.addEventListener('click', onCancel);
+    els.confirmModal.querySelector('.modal-bg')?.addEventListener('click', onCancel);
+  });
 }
 
 function showModal(): void {
@@ -174,6 +279,115 @@ function showModal(): void {
 
 function hideModal(): void {
   els.saveModal.classList.add('hidden');
+}
+
+// ============================================================================
+// EDIT SESSION MODAL
+// ============================================================================
+let currentEditSession: Session | null = null;
+let editedTabs: Session['tabs'] = [];
+
+async function openEditModal(id: string): Promise<void> {
+  try {
+    const session = await sendMessage<Session>(MessageType.GET_SESSION, { id });
+    if (!session) {
+      alert('Session not found');
+      return;
+    }
+
+    currentEditSession = session;
+    editedTabs = [...session.tabs];
+
+    // Populate form
+    els.editName.value = session.name;
+    els.editDescription.value = session.description || '';
+    els.editTags.value = session.tags.join(', ');
+
+    // Render tabs
+    renderEditTabs();
+
+    // Show modal
+    els.editModal.classList.remove('hidden');
+    els.editName.focus();
+  } catch (error) {
+    console.error('Failed to load session for editing:', error);
+    alert('Failed to load session');
+  }
+}
+
+function renderEditTabs(): void {
+  els.editTabCount.textContent = editedTabs.length.toString();
+  els.editTabsList.innerHTML = editedTabs
+    .map(
+      (tab, index) => `
+    <div class="tab-item" data-index="${index}">
+      <img src="${escapeHtml(tab.favicon || '')}" onerror="this.style.display='none'">
+      <div class="tab-item-info">
+        <div class="tab-item-title">${escapeHtml(tab.title)}</div>
+        <div class="tab-item-url">${escapeHtml(tab.url)}</div>
+      </div>
+      <button type="button" class="tab-item-remove" data-index="${index}">&times;</button>
+    </div>
+  `
+    )
+    .join('');
+
+  // Add remove listeners
+  els.editTabsList.querySelectorAll('.tab-item-remove').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      const index = parseInt((btn as HTMLElement).dataset.index!, 10);
+      removeTabFromEdit(index);
+    });
+  });
+}
+
+function removeTabFromEdit(index: number): void {
+  editedTabs.splice(index, 1);
+  renderEditTabs();
+}
+
+function hideEditModal(): void {
+  els.editModal.classList.add('hidden');
+  currentEditSession = null;
+  editedTabs = [];
+}
+
+async function saveEditSession(): Promise<void> {
+  if (!currentEditSession) return;
+
+  const name = els.editName.value.trim();
+  const description = els.editDescription.value.trim();
+  const tags = els.editTags.value
+    .split(',')
+    .map(t => t.trim())
+    .filter(Boolean);
+
+  if (!name) {
+    alert('Name is required');
+    return;
+  }
+
+  try {
+    await sendMessage(MessageType.UPDATE_SESSION, {
+      id: currentEditSession.id,
+      updates: {
+        name,
+        description,
+        tags,
+        tabs: editedTabs,
+        tabCount: editedTabs.length,
+      },
+    });
+
+    // Refresh sessions list
+    sessions = await sendMessage<SessionMetadata[]>(MessageType.GET_SESSIONS);
+    renderSessions(sessions);
+    hideEditModal();
+  } catch (error) {
+    console.error('Failed to save session:', error);
+    alert('Failed to save changes');
+  }
 }
 
 // Events
@@ -199,15 +413,25 @@ function setupEvents(): void {
     if (name) await saveSession(name, tags);
   });
 
+  // Edit Modal
+  els.editModal.querySelector('.modal-bg')?.addEventListener('click', hideEditModal);
+  els.closeEditModal.addEventListener('click', hideEditModal);
+  els.cancelEditBtn.addEventListener('click', hideEditModal);
+  els.editForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    await saveEditSession();
+  });
+
   // Grid clicks
   els.sessionsGrid.addEventListener('click', async e => {
     const target = e.target as HTMLElement;
     const card = target.closest('.card') as HTMLElement;
     if (!card) return;
     const id = card.dataset.id!;
-    if (target.classList.contains('restore')) await restoreSession(id);
+    if (target.classList.contains('edit')) await openEditModal(id);
+    else if (target.classList.contains('restore'))
+      await restoreSession(id, target as HTMLButtonElement);
     else if (target.classList.contains('delete')) await deleteSession(id);
-    else await restoreSession(id);
   });
 
   // Recovery clicks
@@ -215,53 +439,99 @@ function setupEvents(): void {
     const target = e.target as HTMLElement;
     if (target.dataset.action === 'restore-emergency') {
       const item = target.closest('.list-item') as HTMLElement;
-      // For emergency, we need to get full session and restore
-      const emergency = await sendMessage<Session[]>(MessageType.GET_EMERGENCY_SESSIONS);
-      const session = emergency.find(s => s.id === item?.dataset.id);
-      if (session) {
-        // Save as regular session first
-        await sendMessage(MessageType.SAVE_SESSION, {
-          name: session.name.replace('Emergency Backup', 'Recovered'),
-          tags: ['recovered'],
-        });
+      if (!item) return;
+      const id = item.dataset.id!;
+      const btn = target as HTMLButtonElement;
+
+      const originalText = btn.textContent || 'Restore';
+      btn.disabled = true;
+      btn.textContent = 'Restoring...';
+      btn.classList.add('loading');
+
+      try {
+        await sendMessage(MessageType.RESTORE_EMERGENCY_SESSION, { id });
+      } catch (error) {
+        console.error('Failed to restore emergency session:', error);
+        alert('Failed to restore session');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+        btn.classList.remove('loading');
       }
+    }
+  });
+
+  // Clear Recovery
+  els.clearRecoveryBtn.addEventListener('click', async () => {
+    const confirmed = await confirmAction(
+      'Delete All Backups',
+      'Are you sure you want to delete ALL emergency backups? This action cannot be undone.'
+    );
+    if (!confirmed) return;
+
+    try {
+      await sendMessage(MessageType.CLEAR_EMERGENCY_SESSIONS);
+      await renderRecovery();
+    } catch (error) {
+      console.error('Failed to clear emergency sessions:', error);
+      alert('Failed to clear backups');
     }
   });
 
   // Settings changes
   els.autoSaveInterval.addEventListener('change', () => {
-    sendMessage(MessageType.UPDATE_SETTINGS, {
+    void sendMessage(MessageType.UPDATE_SETTINGS, {
       autoSaveInterval: Number(els.autoSaveInterval.value),
     });
   });
   els.saveScroll.addEventListener('change', () => {
-    sendMessage(MessageType.UPDATE_SETTINGS, { saveScrollPosition: els.saveScroll.checked });
+    void sendMessage(MessageType.UPDATE_SETTINGS, { saveScrollPosition: els.saveScroll.checked });
   });
   els.lazyRestore.addEventListener('change', () => {
-    sendMessage(MessageType.UPDATE_SETTINGS, { lazyRestore: els.lazyRestore.checked });
+    void sendMessage(MessageType.UPDATE_SETTINGS, { lazyRestore: els.lazyRestore.checked });
+  });
+  els.clearPreviousTabs.addEventListener('change', () => {
+    void sendMessage(MessageType.UPDATE_SETTINGS, { clearPreviousTabs: els.clearPreviousTabs.checked });
   });
   els.theme.addEventListener('change', () => {
-    sendMessage(MessageType.UPDATE_SETTINGS, { theme: els.theme.value });
+    void sendMessage(MessageType.UPDATE_SETTINGS, { theme: els.theme.value });
     document.documentElement.dataset.theme = els.theme.value;
   });
+
+  // Combined Filter Function
+  function applyFilters(): void {
+    const searchQuery = els.searchInput.value.toLowerCase();
+    const tagFilter = els.tagFilter.value;
+
+    let filtered = sessions;
+
+    // Apply tag filter first
+    if (tagFilter) {
+      filtered = filtered.filter(s => s.tags.includes(tagFilter));
+    }
+
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter(
+        s =>
+          s.name.toLowerCase().includes(searchQuery) ||
+          s.tags.some(t => t.toLowerCase().includes(searchQuery)) ||
+          s.domainPreview.some(d => d.toLowerCase().includes(searchQuery))
+      );
+    }
+
+    renderSessions(filtered);
+  }
 
   // Search
   let searchTimeout: ReturnType<typeof setTimeout>;
   els.searchInput.addEventListener('input', () => {
     clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-      const q = els.searchInput.value.toLowerCase();
-      const filtered = q
-        ? sessions.filter(
-            s =>
-              s.name.toLowerCase().includes(q) ||
-              s.tags.some(t => t.includes(q)) ||
-              s.domainPreview.some(d => d.includes(q))
-          )
-        : sessions;
-      renderSessions(filtered);
-    }, 200);
+    searchTimeout = setTimeout(applyFilters, 200);
   });
+
+  // Tag Filter
+  els.tagFilter.addEventListener('change', applyFilters);
 
   // Keyboard
   document.addEventListener('keydown', e => {
@@ -281,7 +551,27 @@ async function init(): Promise<void> {
   // Load data
   sessions = await sendMessage<SessionMetadata[]>(MessageType.GET_SESSIONS);
   renderSessions(sessions);
+  populateTags();
   await updateStorage();
+}
+
+/**
+ * Populates the tag filter dropdown with all unique tags from sessions
+ */
+function populateTags(): void {
+  const allTags = new Set<string>();
+  sessions.forEach(s => s.tags.forEach(t => allTags.add(t)));
+
+  // Clear existing options except "All Tags"
+  els.tagFilter.innerHTML = '<option value="">All Tags</option>';
+
+  // Sort and add tags
+  [...allTags].sort().forEach(tag => {
+    const option = document.createElement('option');
+    option.value = tag;
+    option.textContent = tag;
+    els.tagFilter.appendChild(option);
+  });
 }
 
 init().catch(console.error);

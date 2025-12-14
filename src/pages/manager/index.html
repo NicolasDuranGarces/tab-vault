@@ -14,7 +14,7 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="logo">
-                <img src="icons/icon32.png" alt="Tab Vault" width="28" height="28">
+                <img src="icons/logo.svg" alt="Tab Vault" width="28" height="28">
                 <span>Tab Vault</span>
             </div>
             <nav class="nav">
@@ -33,6 +33,9 @@
                 <h1 id="viewTitle">Sessions</h1>
                 <div class="actions">
                     <input type="search" id="searchInput" class="search-input" placeholder="Search...">
+                    <select id="tagFilter" class="tag-filter">
+                        <option value="">All Tags</option>
+                    </select>
                     <button id="saveBtn" class="btn-primary">Save Session</button>
                 </div>
             </header>
@@ -47,6 +50,9 @@
 
             <!-- Recovery View -->
             <div id="recoveryView" class="view">
+                <div class="list-actions">
+                    <button id="clearRecoveryBtn" class="btn-danger hidden">Delete All Backups</button>
+                </div>
                 <div id="recoveryList" class="list"></div>
             </div>
 
@@ -61,8 +67,9 @@
                         </select>
                     </label>
                     <label><input type="checkbox" id="saveScroll" checked> Save scroll position</label>
-                    <label><input type="checkbox" id="saveForm" checked> Save form data</label>
+                    <label><input type="checkbox" id="saveFormData" checked> Save form data</label>
                     <label><input type="checkbox" id="lazyRestore" checked> Lazy restore</label>
+                    <label><input type="checkbox" id="clearPreviousTabs"> Close other tabs on restore</label>
                     <label>Theme
                         <select id="theme">
                             <option value="dark">Dark</option>
@@ -74,7 +81,7 @@
         </main>
     </div>
 
-    <!-- Modals -->
+    <!-- Save Modal -->
     <div id="saveModal" class="modal hidden">
         <div class="modal-bg"></div>
         <div class="modal-box">
@@ -87,6 +94,52 @@
                     <button type="submit" class="btn-primary">Save</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Edit Session Modal -->
+    <div id="editModal" class="modal hidden">
+        <div class="modal-bg"></div>
+        <div class="modal-box modal-box-large">
+            <div class="modal-header">
+                <h3>Edit Session</h3>
+                <button type="button" class="modal-close" id="closeEditModal">&times;</button>
+            </div>
+            <form id="editForm">
+                <div class="form-group">
+                    <label for="editName">Name</label>
+                    <input type="text" id="editName" placeholder="Session name" required>
+                </div>
+                <div class="form-group">
+                    <label for="editDescription">Description</label>
+                    <textarea id="editDescription" placeholder="Optional description" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editTags">Tags</label>
+                    <input type="text" id="editTags" placeholder="Tags (comma separated)">
+                </div>
+                <div class="form-group">
+                    <label>Tabs (<span id="editTabCount">0</span>)</label>
+                    <div id="editTabsList" class="tabs-list"></div>
+                </div>
+                <div class="btns">
+                    <button type="button" class="btn-cancel" id="cancelEditBtn">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="confirmModal" class="modal hidden">
+        <div class="modal-bg"></div>
+        <div class="modal-box">
+            <h3 id="confirmTitle">Confirm Action</h3>
+            <p id="confirmMessage" class="confirm-message">Are you sure you want to proceed?</p>
+            <div class="btns">
+                <button type="button" class="btn-cancel" id="cancelConfirmBtn">Cancel</button>
+                <button type="button" class="btn-danger" id="doConfirmBtn">Confirm</button>
+            </div>
         </div>
     </div>
 

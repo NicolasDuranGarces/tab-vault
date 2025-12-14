@@ -44,17 +44,26 @@ class TabService {
     const processedTabs: TabData[] = [];
 
     for (const tab of tabs) {
+      // Resolve lazy tabs first
+      let url = tab.url;
+      if (tab.id && url === 'chrome://newtab/') {
+        const pending = await this.getPendingLazyUrl(tab.id);
+        if (pending) {
+          url = pending;
+        }
+      }
+
       // Skip invalid URLs
-      if (!tab.url || !isValidUrl(tab.url)) {
+      if (!url || !isValidUrl(url)) {
         continue;
       }
 
       // Skip excluded domains
-      if (shouldExcludeUrl(tab.url, settings.excludedDomains)) {
+      if (shouldExcludeUrl(url, settings.excludedDomains)) {
         continue;
       }
 
-      const sanitizedUrl = sanitizeUrl(tab.url);
+      const sanitizedUrl = sanitizeUrl(url);
       if (!sanitizedUrl) {
         continue;
       }
@@ -192,6 +201,14 @@ class TabService {
             await this.setPendingLazyUrl(createdTab.id, tabData.url);
           }
 
+          // Store pending scroll/form data for restoration after page loads
+          if (tabData.scrollPosition || tabData.formData) {
+            await this.setPendingRestoreData(createdTab.id, {
+              scrollPosition: tabData.scrollPosition,
+              formData: tabData.formData,
+            });
+          }
+
           // Handle group restoration
           if (options.restoreGroups && tabData.groupId !== -1 && tabData.groupId !== undefined) {
             const oldGroupId = tabData.groupId;
@@ -230,6 +247,91 @@ class TabService {
     }
 
     return createdTabIds;
+  }
+
+  /**
+   * Cycles through tabs to force them to load
+   * @param tabIds - IDs of tabs to cycle
+   */
+  async cycleTabs(tabIds: number[]): Promise<void> {
+    if (tabIds.length === 0) return;
+
+    // Get currently active tab to restore it later
+    const current = await chrome.tabs.query({ active: true, currentWindow: true });
+    const originalActiveId = current[0]?.id;
+
+    for (const id of tabIds) {
+      try {
+        await chrome.tabs.update(id, { active: true });
+        // Short dwell to trigger load
+        await new Promise(resolve => setTimeout(resolve, 150));
+      } catch (error) {
+        // Tab might be closed
+      }
+    }
+
+    // Restore original active tab if it's still open
+    if (originalActiveId !== undefined) {
+      try {
+        await chrome.tabs.update(originalActiveId, { active: true });
+      } catch {
+        // Original tab might be closed
+        if (tabIds.length > 0) {
+          // Activate the last restored tab
+          await chrome.tabs.update(tabIds[tabIds.length - 1] as number, { active: true });
+        }
+      }
+    }
+  }
+
+  /**
+   * Stores pending restore data (scroll/form) for a tab
+   */
+  private async setPendingRestoreData(
+    tabId: number,
+    data: {
+      scrollPosition?: { x: number; y: number };
+      formData?: Record<string, string>;
+    }
+  ): Promise<void> {
+    await chrome.storage.session.set({ [`restore_${tabId}`]: data });
+  }
+
+  /**
+   * Gets and clears pending restore data for a tab
+   */
+  async getPendingRestoreData(tabId: number): Promise<{
+    scrollPosition?: { x: number; y: number };
+    formData?: Record<string, string>;
+  } | null> {
+    const key = `restore_${tabId}`;
+    const result = await chrome.storage.session.get(key);
+    if (result[key]) {
+      await chrome.storage.session.remove(key);
+      return result[key] as {
+        scrollPosition?: { x: number; y: number };
+        formData?: Record<string, string>;
+      };
+    }
+    return null;
+  }
+
+  /**
+   * Restores pending scroll/form data for a tab (call when tab finishes loading)
+   */
+  async restorePendingData(tabId: number): Promise<void> {
+    const data = await this.getPendingRestoreData(tabId);
+    if (!data) return;
+
+    // Small delay to ensure page is ready
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    if (data.scrollPosition) {
+      await this.restoreScrollPosition(tabId, data.scrollPosition);
+    }
+    if (data.formData) {
+      await this.restoreFormData(tabId, data.formData);
+    }
   }
 
   /**

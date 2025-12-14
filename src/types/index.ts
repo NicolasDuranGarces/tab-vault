@@ -169,6 +169,8 @@ export interface Settings {
   detectDuplicates: boolean;
   /** Whether crash recovery is enabled */
   crashRecoveryEnabled: boolean;
+  /** Whether to clear previous tabs when restoring */
+  clearPreviousTabs: boolean;
   /** Whether onboarding has been completed */
   onboardingComplete: boolean;
 }
@@ -192,6 +194,7 @@ export const DEFAULT_SETTINGS: Settings = {
   lazyRestore: true,
   detectDuplicates: true,
   crashRecoveryEnabled: true,
+  clearPreviousTabs: false,
   onboardingComplete: false,
 };
 
@@ -286,11 +289,12 @@ export enum MessageType {
 
   // Statistics
   GET_STATISTICS = 'GET_STATISTICS',
+  RESTORE_EMERGENCY_SESSION = 'RESTORE_EMERGENCY_SESSION',
+  CLEAR_EMERGENCY_SESSIONS = 'CLEAR_EMERGENCY_SESSIONS',
 
   // Crash recovery
   CHECK_CRASH = 'CHECK_CRASH',
   GET_EMERGENCY_SESSIONS = 'GET_EMERGENCY_SESSIONS',
-  CLEAR_EMERGENCY_SESSIONS = 'CLEAR_EMERGENCY_SESSIONS',
 }
 
 /**

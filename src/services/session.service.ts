@@ -16,6 +16,8 @@ import { extractDomain } from '@/utils/validation';
  * Session management service
  */
 class SessionService {
+  private restoringSessions = new Set<string>();
+
   /**
    * Creates and saves a new session from current tabs
    * @param name - Session name
@@ -118,6 +120,7 @@ class SessionService {
       description?: string;
       tags?: string[];
       folderId?: string;
+      tabs?: TabData[];
     }
   ): Promise<Session | null> {
     const session = await this.getSession(id);
@@ -136,6 +139,12 @@ class SessionService {
     }
     if (updates.folderId !== undefined) {
       session.folderId = updates.folderId;
+    }
+    if (updates.tabs !== undefined) {
+      session.tabs = updates.tabs;
+      session.tabCount = updates.tabs.length;
+      session.faviconPreview = updates.tabs.slice(0, 5).map(t => t.favicon);
+      session.domainPreview = [...new Set(updates.tabs.slice(0, 5).map(t => extractDomain(t.url)))];
     }
 
     session.updatedAt = now();
@@ -168,42 +177,78 @@ class SessionService {
    * @returns Array of created tab IDs
    */
   async restoreSession(id: string, options: Partial<RestoreOptions> = {}): Promise<number[]> {
-    const session = await this.getSession(id);
-    if (!session) {
-      throw new Error('Session not found');
+    if (this.restoringSessions.has(id)) {
+      console.warn('Session restore already in progress for:', id);
+      return [];
     }
 
-    const restoreOptions: RestoreOptions = { ...DEFAULT_RESTORE_OPTIONS, ...options };
+    this.restoringSessions.add(id);
 
-    // Filter tabs if specific IDs are provided
-    let tabsToRestore = session.tabs;
-    if (restoreOptions.tabIds) {
-      tabsToRestore = session.tabs.filter(t => restoreOptions.tabIds?.includes(t.id));
+    try {
+      const session = await this.getSession(id);
+      if (!session) {
+        throw new Error('Session not found');
+      }
+
+      const restoreOptions: RestoreOptions = { ...DEFAULT_RESTORE_OPTIONS, ...options };
+
+      // Filter tabs if specific IDs are provided
+      let tabsToRestore = session.tabs;
+      if (restoreOptions.tabIds) {
+        tabsToRestore = session.tabs.filter(t => restoreOptions.tabIds?.includes(t.id));
+      }
+
+      // Detect duplicates if enabled
+      // Detect duplicates if enabled (only if NOT clearing previous tabs)
+      const settings = await storageService.getSettings();
+      if (settings.detectDuplicates && !settings.clearPreviousTabs) {
+        const currentTabs = await tabService.captureCurrentWindowTabs(settings);
+        const currentUrls = currentTabs.map(t => t.url);
+        tabsToRestore = tabsToRestore.filter(
+          t => !currentUrls.some(cu => this.isUrlMatch(t.url, cu))
+        );
+      }
+
+      // Capture current tabs to close if requested
+      // We do this BEFORE restore to ensure we don't close newly restored tabs
+      let tabsToClose: number[] = [];
+      if (settings.clearPreviousTabs && !restoreOptions.newWindow) {
+        const currentTabs = await chrome.tabs.query({ currentWindow: true });
+        tabsToClose = currentTabs.map(t => t.id).filter((id): id is number => id !== undefined);
+      }
+
+      const createdTabIds = await tabService.restoreTabs(tabsToRestore, restoreOptions);
+
+      // Update session access time
+      session.lastAccessedAt = now();
+      await storageService.saveSession(session);
+
+      // Update statistics
+      const stats = await storageService.getStatistics();
+      await storageService.updateStatistics({
+        totalSessionsRestored: stats.totalSessionsRestored + 1,
+        totalTabsRestored: stats.totalTabsRestored + createdTabIds.length,
+        lastUseDate: now(),
+      });
+
+      await tabService.cycleTabs(createdTabIds);
+
+      // Close previous tabs if requested
+      if (tabsToClose.length > 0) {
+        // Ensure we don't close the window if something went wrong with restore
+        if (createdTabIds.length > 0) {
+          try {
+            await chrome.tabs.remove(tabsToClose);
+          } catch (error) {
+             console.error('Failed to close previous tabs:', error);
+          }
+        }
+      }
+
+      return createdTabIds;
+    } finally {
+      this.restoringSessions.delete(id);
     }
-
-    // Detect duplicates if enabled
-    const settings = await storageService.getSettings();
-    if (settings.detectDuplicates) {
-      const currentTabs = await tabService.captureCurrentWindowTabs(settings);
-      const currentUrls = new Set(currentTabs.map(t => t.url));
-      tabsToRestore = tabsToRestore.filter(t => !currentUrls.has(t.url));
-    }
-
-    const createdTabIds = await tabService.restoreTabs(tabsToRestore, restoreOptions);
-
-    // Update session access time
-    session.lastAccessedAt = now();
-    await storageService.saveSession(session);
-
-    // Update statistics
-    const stats = await storageService.getStatistics();
-    await storageService.updateStatistics({
-      totalSessionsRestored: stats.totalSessionsRestored + 1,
-      totalTabsRestored: stats.totalTabsRestored + createdTabIds.length,
-      lastUseDate: now(),
-    });
-
-    return createdTabIds;
   }
 
   /**
@@ -371,6 +416,101 @@ class SessionService {
 
     await storageService.saveEmergencySession(session, settings.maxEmergencySessions);
     return session;
+  }
+
+  /**
+   * Restores an emergency session without saving it to the main list
+   * @param id - Emergency session ID
+   * @param options - Restore options
+   * @returns Array of created tab IDs
+   */
+  async restoreEmergencySession(
+    id: string,
+    options: Partial<RestoreOptions> = {}
+  ): Promise<number[]> {
+    if (this.restoringSessions.has(id)) {
+      console.warn('Session restore already in progress for:', id);
+      return [];
+    }
+    this.restoringSessions.add(id);
+
+    try {
+      const emergencySessions = await storageService.getEmergencySessions();
+      const session = emergencySessions.find(s => s.id === id);
+      if (!session) {
+        throw new Error('Emergency session not found');
+      }
+
+      const restoreOptions: RestoreOptions = { ...DEFAULT_RESTORE_OPTIONS, ...options };
+
+      // Filter tabs if specific IDs are provided
+      let tabsToRestore = session.tabs;
+      if (restoreOptions.tabIds) {
+        tabsToRestore = session.tabs.filter(t => restoreOptions.tabIds?.includes(t.id));
+      }
+
+      // Detect duplicates if enabled (only if NOT clearing previous tabs)
+      const settings = await storageService.getSettings();
+      if (settings.detectDuplicates && !settings.clearPreviousTabs) {
+        const currentTabs = await tabService.captureCurrentWindowTabs(settings);
+        const currentUrls = currentTabs.map(t => t.url);
+        tabsToRestore = tabsToRestore.filter(t => !currentUrls.some(cu => this.isUrlMatch(t.url, cu)));
+      }
+
+      // Capture current tabs to close if requested
+      let tabsToClose: number[] = [];
+      if (settings.clearPreviousTabs && !restoreOptions.newWindow) {
+        const currentTabs = await chrome.tabs.query({ currentWindow: true });
+        tabsToClose = currentTabs.map(t => t.id).filter((id): id is number => id !== undefined);
+      }
+
+      const createdTabIds = await tabService.restoreTabs(tabsToRestore, restoreOptions);
+      
+      // Update statistics
+      const stats = await storageService.getStatistics();
+      await storageService.updateStatistics({
+        totalSessionsRestored: stats.totalSessionsRestored + 1,
+        totalTabsRestored: stats.totalTabsRestored + createdTabIds.length,
+        lastUseDate: now(),
+      });
+
+      // If we await cycle, the button stays "Restoring..." during cycle.
+      // This is good feedback.
+      await tabService.cycleTabs(createdTabIds);
+
+      // Close previous tabs if requested
+      if (tabsToClose.length > 0) {
+          if (createdTabIds.length > 0) {
+            try {
+              await chrome.tabs.remove(tabsToClose);
+            } catch (error) {
+               console.error('Failed to close previous tabs:', error);
+            }
+          }
+      }
+
+      return createdTabIds;
+    } finally {
+      this.restoringSessions.delete(id);
+    }
+  }
+
+  /**
+   * Deletes all emergency sessions
+   */
+  async deleteAllEmergencySessions(): Promise<void> {
+    await storageService.clearEmergencySessions();
+  }
+
+  private isUrlMatch(url1: string, url2: string): boolean {
+    try {
+      // Normalize by removing trailing slash and lowercase
+      const u1 = url1.toLowerCase().replace(/\/$/, '');
+      const u2 = url2.toLowerCase().replace(/\/$/, '');
+      return u1 === u2;
+    } catch {
+      return url1 === url2;
+    }
   }
 }
 
