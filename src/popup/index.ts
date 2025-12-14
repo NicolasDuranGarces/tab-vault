@@ -1,117 +1,66 @@
 /**
- * Tab Vault Popup Script
- * Handles all popup UI interactions
+ * Tab Vault Popup
  */
 
 import { MessageType } from '@/types';
 import type { SessionMetadata, Statistics, Response } from '@/types';
 import './styles.css';
 
-// ============================================================================
-// DOM ELEMENTS
-// ============================================================================
+// DOM Elements
+const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
 const elements = {
-  // Buttons
-  saveSessionBtn: document.getElementById('saveSessionBtn') as HTMLButtonElement,
-  openManagerBtn: document.getElementById('openManagerBtn') as HTMLButtonElement,
-  settingsBtn: document.getElementById('settingsBtn') as HTMLButtonElement,
-  
-  // Search
-  searchInput: document.getElementById('searchInput') as HTMLInputElement,
-  
-  // Sessions
-  sessionsList: document.getElementById('sessionsList') as HTMLDivElement,
-  sessionCount: document.getElementById('sessionCount') as HTMLSpanElement,
-  emptyState: document.getElementById('emptyState') as HTMLDivElement,
-  
-  // Stats
-  totalSessions: document.getElementById('totalSessions') as HTMLSpanElement,
-  totalTabs: document.getElementById('totalTabs') as HTMLSpanElement,
-  
-  // Recovery
-  recoveryNotice: document.getElementById('recoveryNotice') as HTMLDivElement,
-  recoverBtn: document.getElementById('recoverBtn') as HTMLButtonElement,
-  
-  // Modal
-  saveModal: document.getElementById('saveModal') as HTMLDivElement,
-  saveForm: document.getElementById('saveForm') as HTMLFormElement,
-  sessionName: document.getElementById('sessionName') as HTMLInputElement,
-  sessionTags: document.getElementById('sessionTags') as HTMLInputElement,
-  cancelSaveBtn: document.getElementById('cancelSaveBtn') as HTMLButtonElement,
+  saveSessionBtn: $<HTMLButtonElement>('saveSessionBtn'),
+  openManagerBtn: $<HTMLButtonElement>('openManagerBtn'),
+  settingsBtn: $<HTMLButtonElement>('settingsBtn'),
+  sessionsList: $<HTMLDivElement>('sessionsList'),
+  sessionCount: $<HTMLSpanElement>('sessionCount'),
+  emptyState: $<HTMLDivElement>('emptyState'),
+  totalSessions: $<HTMLSpanElement>('totalSessions'),
+  totalTabs: $<HTMLSpanElement>('totalTabs'),
+  saveModal: $<HTMLDivElement>('saveModal'),
+  saveForm: $<HTMLFormElement>('saveForm'),
+  sessionName: $<HTMLInputElement>('sessionName'),
+  sessionTags: $<HTMLInputElement>('sessionTags'),
+  cancelSaveBtn: $<HTMLButtonElement>('cancelSaveBtn'),
 };
 
-// ============================================================================
-// STATE
-// ============================================================================
+let sessions: SessionMetadata[] = [];
 
-let currentSessions: SessionMetadata[] = [];
-let searchTimeout: ReturnType<typeof setTimeout>;
-
-// ============================================================================
-// API HELPERS
-// ============================================================================
-
+// API
 async function sendMessage<T>(type: MessageType, payload?: unknown): Promise<T> {
   const response = await chrome.runtime.sendMessage({ type, payload }) as Response<T>;
-  if (!response.success) {
-    throw new Error(response.error || 'Unknown error');
-  }
+  if (!response.success) throw new Error(response.error || 'Unknown error');
   return response.data as T;
 }
 
-// ============================================================================
-// UI RENDERING
-// ============================================================================
-
+// Format date
 function formatDate(timestamp: number): string {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
+  const diff = Date.now() - timestamp;
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
 
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+  return new Date(timestamp).toLocaleDateString();
 }
 
-function createSessionCard(session: SessionMetadata): HTMLElement {
+// Create session card
+function createCard(session: SessionMetadata): HTMLElement {
   const card = document.createElement('div');
   card.className = 'session-card';
   card.dataset.id = session.id;
 
-  // Favicons
-  const faviconsHtml = session.faviconPreview.slice(0, 4).map((favicon, i) => {
-    if (favicon) {
-      return `<img src="${escapeHtml(favicon)}" class="favicon" alt="" style="z-index: ${4 - i}" onerror="this.style.display='none'">`;
-    }
-    return `<div class="favicon-placeholder" style="z-index: ${4 - i}">${session.domainPreview[i]?.charAt(0).toUpperCase() || '?'}</div>`;
-  }).join('');
-
-  const moreCount = session.tabCount - 4;
-  const moreHtml = moreCount > 0 ? `<div class="favicon-placeholder" style="z-index: 0">+${moreCount}</div>` : '';
-
+  const initial = session.name.charAt(0).toUpperCase();
+  
   card.innerHTML = `
-    <div class="session-favicons">
-      ${faviconsHtml}
-      ${moreHtml}
-    </div>
+    <div class="session-icon">${initial}</div>
     <div class="session-info">
       <div class="session-name">${escapeHtml(session.name)}</div>
-      <div class="session-meta">
-        <span class="session-tabs">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="9" y1="3" x2="9" y2="21"></line>
-          </svg>
-          ${session.tabCount} tabs
-        </span>
-        <span class="session-date">${formatDate(session.updatedAt)}</span>
-      </div>
+      <div class="session-meta">${session.tabCount} tabs • ${formatDate(session.updatedAt)}</div>
     </div>
     <div class="session-actions">
       <button class="action-btn restore" title="Restore">
@@ -129,43 +78,20 @@ function createSessionCard(session: SessionMetadata): HTMLElement {
     </div>
   `;
 
-  // Event listeners
-  const restoreBtn = card.querySelector('.restore') as HTMLButtonElement;
-  const deleteBtn = card.querySelector('.delete') as HTMLButtonElement;
-
-  restoreBtn.addEventListener('click', (e) => {
+  // Events
+  card.querySelector('.restore')?.addEventListener('click', (e) => {
     e.stopPropagation();
     restoreSession(session.id);
   });
 
-  deleteBtn.addEventListener('click', (e) => {
+  card.querySelector('.delete')?.addEventListener('click', (e) => {
     e.stopPropagation();
     deleteSession(session.id);
   });
 
-  card.addEventListener('click', () => {
-    restoreSession(session.id);
-  });
+  card.addEventListener('click', () => restoreSession(session.id));
 
   return card;
-}
-
-function renderSessions(sessions: SessionMetadata[]): void {
-  elements.sessionsList.innerHTML = '';
-  
-  if (sessions.length === 0) {
-    elements.emptyState.classList.remove('hidden');
-    elements.sessionCount.textContent = '0';
-    return;
-  }
-
-  elements.emptyState.classList.add('hidden');
-  elements.sessionCount.textContent = sessions.length.toString();
-
-  sessions.forEach(session => {
-    const card = createSessionCard(session);
-    elements.sessionsList.appendChild(card);
-  });
 }
 
 function escapeHtml(str: string): string {
@@ -174,136 +100,82 @@ function escapeHtml(str: string): string {
   return div.innerHTML;
 }
 
-// ============================================================================
-// DATA LOADING
-// ============================================================================
+// Render sessions
+function render(list: SessionMetadata[]): void {
+  elements.sessionsList.innerHTML = '';
+  elements.sessionCount.textContent = list.length.toString();
 
+  if (list.length === 0) {
+    elements.emptyState.classList.remove('hidden');
+    return;
+  }
+
+  elements.emptyState.classList.add('hidden');
+  list.forEach(s => elements.sessionsList.appendChild(createCard(s)));
+}
+
+// Load data
 async function loadSessions(): Promise<void> {
   try {
-    currentSessions = await sendMessage<SessionMetadata[]>(MessageType.GET_SESSIONS);
-    renderSessions(currentSessions);
+    sessions = await sendMessage<SessionMetadata[]>(MessageType.GET_SESSIONS);
+    render(sessions);
   } catch (error) {
     console.error('Failed to load sessions:', error);
-    elements.sessionsList.innerHTML = `
-      <div class="empty-state">
-        <p>Failed to load sessions</p>
-        <span>Please try again</span>
-      </div>
-    `;
+    elements.sessionsList.innerHTML = '<div class="empty-state"><p>Failed to load</p></div>';
   }
 }
 
-async function loadStatistics(): Promise<void> {
+async function loadStats(): Promise<void> {
   try {
     const stats = await sendMessage<Statistics>(MessageType.GET_STATISTICS);
     elements.totalSessions.textContent = stats.totalSessionsSaved.toString();
     elements.totalTabs.textContent = stats.totalTabsSaved.toString();
   } catch (error) {
-    console.error('Failed to load statistics:', error);
+    console.error('Failed to load stats:', error);
   }
 }
 
-async function checkCrashRecovery(): Promise<void> {
-  try {
-    const wasCrash = await sendMessage<boolean>(MessageType.CHECK_CRASH);
-    if (wasCrash) {
-      elements.recoveryNotice.classList.remove('hidden');
-    }
-  } catch (error) {
-    console.error('Failed to check crash recovery:', error);
-  }
-}
-
-// ============================================================================
-// SESSION ACTIONS
-// ============================================================================
-
+// Actions
 async function saveSession(name: string, tags: string[]): Promise<void> {
   try {
     await sendMessage(MessageType.SAVE_SESSION, { name, tags });
     await loadSessions();
-    await loadStatistics();
+    await loadStats();
     hideModal();
-    showNotification('Session saved successfully!', 'success');
   } catch (error) {
     console.error('Failed to save session:', error);
-    showNotification('Failed to save session', 'error');
+    alert('Failed to save session');
   }
 }
 
 async function restoreSession(id: string): Promise<void> {
   try {
     await sendMessage(MessageType.RESTORE_SESSION, { id });
-    showNotification('Session restored!', 'success');
     window.close();
   } catch (error) {
     console.error('Failed to restore session:', error);
-    showNotification('Failed to restore session', 'error');
+    alert('Failed to restore session');
   }
 }
 
 async function deleteSession(id: string): Promise<void> {
-  if (!confirm('Are you sure you want to delete this session?')) {
-    return;
-  }
+  if (!confirm('Delete this session?')) return;
 
   try {
     await sendMessage(MessageType.DELETE_SESSION, { id });
-    currentSessions = currentSessions.filter(s => s.id !== id);
-    renderSessions(currentSessions);
-    showNotification('Session deleted', 'success');
+    sessions = sessions.filter(s => s.id !== id);
+    render(sessions);
   } catch (error) {
     console.error('Failed to delete session:', error);
-    showNotification('Failed to delete session', 'error');
+    alert('Failed to delete session');
   }
 }
 
-async function recoverSessions(): Promise<void> {
-  try {
-    chrome.tabs.create({
-      url: chrome.runtime.getURL('manager.html?recovery=true'),
-    });
-    window.close();
-  } catch (error) {
-    console.error('Failed to open recovery:', error);
-  }
-}
-
-// ============================================================================
-// SEARCH
-// ============================================================================
-
-function handleSearch(query: string): void {
-  clearTimeout(searchTimeout);
-  
-  searchTimeout = setTimeout(() => {
-    if (!query.trim()) {
-      renderSessions(currentSessions);
-      return;
-    }
-
-    const lowerQuery = query.toLowerCase();
-    const filtered = currentSessions.filter(session => {
-      return (
-        session.name.toLowerCase().includes(lowerQuery) ||
-        session.tags.some(tag => tag.toLowerCase().includes(lowerQuery)) ||
-        session.domainPreview.some(domain => domain.toLowerCase().includes(lowerQuery))
-      );
-    });
-
-    renderSessions(filtered);
-  }, 200);
-}
-
-// ============================================================================
-// MODAL
-// ============================================================================
-
+// Modal
 function showModal(): void {
   const date = new Date();
-  const defaultName = `Session - ${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-  
-  elements.sessionName.value = defaultName;
+  const name = `Session - ${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  elements.sessionName.value = name;
   elements.sessionTags.value = '';
   elements.saveModal.classList.remove('hidden');
   elements.sessionName.focus();
@@ -314,74 +186,35 @@ function hideModal(): void {
   elements.saveModal.classList.add('hidden');
 }
 
-// ============================================================================
-// NOTIFICATIONS
-// ============================================================================
-
-function showNotification(message: string, type: 'success' | 'error'): void {
-  // Simple notification - could be enhanced with toast component
-  console.log(`[${type}] ${message}`);
-}
-
-// ============================================================================
-// EVENT LISTENERS
-// ============================================================================
-
-function setupEventListeners(): void {
-  // Save session button
+// Event Listeners
+function setupEvents(): void {
+  // Buttons
   elements.saveSessionBtn.addEventListener('click', showModal);
-
-  // Open manager button
+  
   elements.openManagerBtn.addEventListener('click', () => {
-    chrome.tabs.create({
-      url: chrome.runtime.getURL('manager.html'),
-    });
+    chrome.tabs.create({ url: chrome.runtime.getURL('manager.html') });
     window.close();
   });
 
-  // Settings button
   elements.settingsBtn.addEventListener('click', () => {
-    chrome.tabs.create({
-      url: chrome.runtime.getURL('manager.html?tab=settings'),
-    });
+    chrome.tabs.create({ url: chrome.runtime.getURL('manager.html?tab=settings') });
     window.close();
   });
 
-  // Search input
-  elements.searchInput.addEventListener('input', (e) => {
-    handleSearch((e.target as HTMLInputElement).value);
-  });
-
-  // Modal cancel button
+  // Modal
   elements.cancelSaveBtn.addEventListener('click', hideModal);
+  elements.saveModal.querySelector('.modal-overlay')?.addEventListener('click', hideModal);
 
-  // Modal backdrop click
-  elements.saveModal.querySelector('.modal-backdrop')?.addEventListener('click', hideModal);
-
-  // Save form submit
   elements.saveForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = elements.sessionName.value.trim();
-    const tags = elements.sessionTags.value
-      .split(',')
-      .map(t => t.trim())
-      .filter(t => t.length > 0);
-
-    if (name) {
-      await saveSession(name, tags);
-    }
+    const tags = elements.sessionTags.value.split(',').map(t => t.trim()).filter(Boolean);
+    if (name) await saveSession(name, tags);
   });
 
-  // Recovery button
-  elements.recoverBtn.addEventListener('click', recoverSessions);
-
-  // Keyboard shortcuts
+  // Keyboard
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      hideModal();
-    }
-    
-    // Ctrl/Cmd + S to save
+    if (e.key === 'Escape') hideModal();
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
       e.preventDefault();
       showModal();
@@ -389,20 +222,10 @@ function setupEventListeners(): void {
   });
 }
 
-// ============================================================================
-// INITIALIZATION
-// ============================================================================
-
+// Init
 async function init(): Promise<void> {
-  setupEventListeners();
-  
-  // Load data in parallel
-  await Promise.all([
-    loadSessions(),
-    loadStatistics(),
-    checkCrashRecovery(),
-  ]);
+  setupEvents();
+  await Promise.all([loadSessions(), loadStats()]);
 }
 
-// Start the app
 init().catch(console.error);
