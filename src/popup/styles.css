@@ -1,4 +1,4 @@
-/* Tab Vault - Clean Corporate Theme */
+/* Tab Vault - Clean Corporate Theme (Polished) */
 
 * {
   margin: 0;
@@ -7,53 +7,57 @@
 }
 
 :root {
-  /* Clean Light Palette */
+  /* Colors */
   --bg: #ffffff;
-  --bg-secondary: #f7f8fa;
-  --bg-tertiary: #eef0f4;
-  --bg-hover: #e8ebef;
+  --bg-secondary: #f8f9fb;
+  --bg-tertiary: #f1f3f5;
+  --bg-hover: #e9ecef;
 
   /* Text */
-  --text: #1a1a2e;
-  --text-secondary: #4a5568;
-  --text-muted: #8492a6;
+  --text: #212529;
+  --text-secondary: #495057;
+  --text-muted: #868e96;
 
-  /* Accent - Professional Blue */
-  --accent: #2563eb;
-  --accent-light: #3b82f6;
-  --accent-soft: rgba(37, 99, 235, 0.08);
-  --accent-hover: rgba(37, 99, 235, 0.12);
+  /* Accent */
+  --accent: #228be6;
+  --accent-hover: #1c7ed6;
+  --accent-soft: rgba(34, 139, 230, 0.1);
 
   /* States */
-  --success: #059669;
-  --danger: #dc2626;
-  --warning: #d97706;
+  --success: #099268;
+  --danger: #e03131;
 
   /* UI */
-  --border: #e2e8f0;
-  --border-hover: #cbd5e1;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --border: #dee2e6;
+  --border-focus: #228be6;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
   --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --radius-sm: 6px;
   --radius: 8px;
+  --radius-lg: 12px;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
-  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
   color: var(--text);
   background: var(--bg);
-  width: 340px;
-  min-height: 420px;
+  width: 360px;
+  min-height: 440px;
+  -webkit-font-smoothing: antialiased;
 }
 
 .hidden { display: none !important; }
 
-/* Header */
+/* ============================================
+   HEADER
+   ============================================ */
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
+  padding: 16px 20px;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
 }
@@ -68,65 +72,70 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   background: var(--accent);
-  border-radius: 6px;
+  border-radius: var(--radius);
+  flex-shrink: 0;
 }
 
 .logo svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
 }
 
 .brand-name {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text);
+  letter-spacing: -0.3px;
 }
 
 .icon-btn {
-  width: 32px;
-  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 36px;
+  height: 36px;
   background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
 }
 
 .icon-btn:hover {
   background: var(--bg-tertiary);
-  border-color: var(--border-hover);
+  border-color: var(--text-muted);
   color: var(--text-secondary);
 }
 
-/* Actions */
+/* ============================================
+   ACTION BUTTONS
+   ============================================ */
 .actions {
   display: flex;
-  gap: 8px;
-  padding: 14px 18px;
+  gap: 10px;
+  padding: 16px 20px;
   background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
 }
 
 .btn {
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 10px 12px;
-  font-size: 13px;
+  gap: 8px;
+  flex: 1;
+  height: 44px;
+  padding: 0 16px;
+  font-size: 14px;
   font-weight: 500;
   border: none;
   border-radius: var(--radius);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
+  text-align: center;
 }
 
 .btn-primary {
@@ -135,7 +144,11 @@ body {
 }
 
 .btn-primary:hover {
-  background: var(--accent-light);
+  background: var(--accent-hover);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
 }
 
 .btn-secondary {
@@ -146,7 +159,7 @@ body {
 
 .btn-secondary:hover {
   background: var(--bg-tertiary);
-  border-color: var(--border-hover);
+  border-color: var(--text-muted);
 }
 
 .btn-ghost {
@@ -159,12 +172,14 @@ body {
   color: var(--text);
 }
 
-/* Sessions Section */
+/* ============================================
+   SESSIONS SECTION
+   ============================================ */
 .sessions-section {
   display: flex;
   flex-direction: column;
-  min-height: 200px;
-  max-height: 260px;
+  min-height: 180px;
+  max-height: 240px;
   background: var(--bg);
 }
 
@@ -172,12 +187,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 18px;
+  padding: 14px 20px;
   background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
 }
 
 .section-title {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -185,24 +201,30 @@ body {
 }
 
 .badge {
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 8px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 2px 8px;
   background: var(--accent-soft);
   color: var(--accent);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
-/* Sessions List */
+/* ============================================
+   SESSIONS LIST
+   ============================================ */
 .sessions-list {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 12px;
-  background: var(--bg);
+  padding: 12px 16px;
 }
 
 .sessions-list::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
 
 .sessions-list::-webkit-scrollbar-track {
@@ -211,21 +233,31 @@ body {
 
 .sessions-list::-webkit-scrollbar-thumb {
   background: var(--border);
-  border-radius: 2px;
+  border-radius: 3px;
 }
 
-/* Session Card */
+.sessions-list::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ============================================
+   SESSION CARD
+   ============================================ */
 .session-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  margin-bottom: 4px;
+  gap: 14px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
+}
+
+.session-card:last-child {
+  margin-bottom: 0;
 }
 
 .session-card:hover {
@@ -235,16 +267,17 @@ body {
 }
 
 .session-icon {
-  width: 34px;
-  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 40px;
+  height: 40px;
   background: var(--accent-soft);
-  border-radius: 6px;
+  border-radius: var(--radius);
   color: var(--accent);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .session-info {
@@ -253,25 +286,25 @@ body {
 }
 
 .session-name {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-bottom: 4px;
 }
 
 .session-meta {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
-  margin-top: 2px;
 }
 
 .session-actions {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   opacity: 0;
-  transition: opacity 0.15s;
+  transition: opacity 0.2s;
 }
 
 .session-card:hover .session-actions {
@@ -279,17 +312,17 @@ body {
 }
 
 .action-btn {
-  width: 26px;
-  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 32px;
+  height: 32px;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.15s ease;
 }
 
 .action-btn:hover {
@@ -303,7 +336,9 @@ body {
   border-color: var(--danger);
 }
 
-/* Loading */
+/* ============================================
+   LOADING & EMPTY STATE
+   ============================================ */
 .loading {
   display: flex;
   align-items: center;
@@ -312,19 +347,18 @@ body {
 }
 
 .spinner {
-  width: 24px;
-  height: 24px;
-  border: 2px solid var(--border);
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border);
   border-top-color: var(--accent);
   border-radius: 50%;
-  animation: spin 0.6s linear infinite;
+  animation: spin 0.7s linear infinite;
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
-/* Empty State */
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -335,29 +369,31 @@ body {
 }
 
 .empty-state svg {
-  color: var(--border-hover);
+  color: var(--border);
+  margin-bottom: 16px;
 }
 
 .empty-state p {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   color: var(--text-secondary);
-  margin-top: 14px;
+  margin-bottom: 4px;
 }
 
 .empty-state span {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
-  margin-top: 4px;
 }
 
-/* Footer */
+/* ============================================
+   FOOTER
+   ============================================ */
 .footer {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 32px;
-  padding: 14px 18px;
+  gap: 40px;
+  padding: 18px 20px;
   background: var(--bg-secondary);
   border-top: 1px solid var(--border);
 }
@@ -366,30 +402,34 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  text-align: center;
 }
 
 .stat-value {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--accent);
+  line-height: 1.2;
 }
 
 .stat-label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .divider {
   width: 1px;
-  height: 28px;
+  height: 36px;
   background: var(--border);
 }
 
-/* Modal */
+/* ============================================
+   MODAL
+   ============================================ */
 .modal {
   position: fixed;
   inset: 0;
@@ -397,49 +437,51 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px;
 }
 
 .modal-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.5);
 }
 
 .modal-content {
   position: relative;
-  width: calc(100% - 40px);
-  max-width: 300px;
-  padding: 20px;
+  width: 100%;
+  max-width: 320px;
+  padding: 24px;
   background: var(--bg);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
-  animation: modalIn 0.15s ease;
+  animation: modalIn 0.2s ease;
 }
 
 @keyframes modalIn {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.95) translateY(10px);
   }
 }
 
 .modal-content h3 {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--text);
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  text-align: center;
 }
 
 .form-group {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .form-group label {
   display: block;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .optional {
@@ -449,19 +491,20 @@ body {
 
 .form-group input {
   width: 100%;
-  padding: 8px 10px;
-  font-size: 13px;
+  height: 44px;
+  padding: 0 14px;
+  font-size: 14px;
   color: var(--text);
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius);
   outline: none;
-  transition: all 0.15s;
+  transition: all 0.2s ease;
 }
 
 .form-group input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-soft);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .form-group input::placeholder {
@@ -470,11 +513,11 @@ body {
 
 .modal-actions {
   display: flex;
-  gap: 8px;
-  margin-top: 16px;
+  gap: 10px;
+  margin-top: 24px;
 }
 
 .modal-actions .btn {
   flex: 1;
-  padding: 8px 12px;
+  height: 44px;
 }
