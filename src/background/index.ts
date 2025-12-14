@@ -226,11 +226,6 @@ async function handleMessage(message: Message): Promise<Response> {
         return { success: true, data: tabIds };
       }
 
-      case MessageType.CLEAR_EMERGENCY_SESSIONS: {
-        await sessionService.deleteAllEmergencySessions();
-        return { success: true };
-      }
-
       // ========== FOLDER OPERATIONS ==========
       case MessageType.GET_FOLDERS: {
         const folders = await storageService.getFolders();

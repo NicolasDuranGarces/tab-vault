@@ -273,7 +273,7 @@ class TabService {
     // Restore original active tab if it's still open
     if (originalActiveId !== undefined) {
       try {
-        await chrome.tabs.update(originalActiveId as number, { active: true });
+        await chrome.tabs.update(originalActiveId, { active: true });
       } catch {
         // Original tab might be closed
         if (tabIds.length > 0) {

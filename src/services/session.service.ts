@@ -203,7 +203,9 @@ class SessionService {
       if (settings.detectDuplicates) {
         const currentTabs = await tabService.captureCurrentWindowTabs(settings);
         const currentUrls = currentTabs.map(t => t.url);
-        tabsToRestore = tabsToRestore.filter(t => !currentUrls.some(cu => this.isUrlMatch(t.url, cu)));
+        tabsToRestore = tabsToRestore.filter(
+          t => !currentUrls.some(cu => this.isUrlMatch(t.url, cu))
+        );
       }
 
       const createdTabIds = await tabService.restoreTabs(tabsToRestore, restoreOptions);
@@ -401,7 +403,10 @@ class SessionService {
    * @param options - Restore options
    * @returns Array of created tab IDs
    */
-  async restoreEmergencySession(id: string, options: Partial<RestoreOptions> = {}): Promise<number[]> {
+  async restoreEmergencySession(
+    id: string,
+    options: Partial<RestoreOptions> = {}
+  ): Promise<number[]> {
     if (this.restoringSessions.has(id)) {
       console.warn('Session restore already in progress for:', id);
       return [];
@@ -428,11 +433,13 @@ class SessionService {
       if (settings.detectDuplicates) {
         const currentTabs = await tabService.captureCurrentWindowTabs(settings);
         const currentUrls = currentTabs.map(t => t.url);
-        tabsToRestore = tabsToRestore.filter(t => !currentUrls.some(cu => this.isUrlMatch(t.url, cu)));
+        tabsToRestore = tabsToRestore.filter(
+          t => !currentUrls.some(cu => this.isUrlMatch(t.url, cu))
+        );
       }
 
       const createdTabIds = await tabService.restoreTabs(tabsToRestore, restoreOptions);
-      
+
       // Update statistics
       const stats = await storageService.getStatistics();
       await storageService.updateStatistics({

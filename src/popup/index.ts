@@ -106,15 +106,15 @@ function createCard(session: SessionMetadata): HTMLElement {
   // Events
   card.querySelector('.restore')?.addEventListener('click', e => {
     e.stopPropagation();
-    restoreSession(session.id);
+    void restoreSession(session.id);
   });
 
   card.querySelector('.delete')?.addEventListener('click', e => {
     e.stopPropagation();
-    deleteSession(session.id);
+    void deleteSession(session.id);
   });
 
-  card.addEventListener('click', () => restoreSession(session.id));
+  card.addEventListener('click', () => void restoreSession(session.id));
 
   return card;
 }
@@ -217,12 +217,12 @@ function setupEvents(): void {
   elements.saveSessionBtn.addEventListener('click', showModal);
 
   elements.openManagerBtn.addEventListener('click', () => {
-    chrome.tabs.create({ url: chrome.runtime.getURL('manager.html') });
+    void chrome.tabs.create({ url: chrome.runtime.getURL('manager.html') });
     window.close();
   });
 
   elements.settingsBtn.addEventListener('click', () => {
-    chrome.tabs.create({ url: chrome.runtime.getURL('manager.html?tab=settings') });
+    void chrome.tabs.create({ url: chrome.runtime.getURL('manager.html?tab=settings') });
     window.close();
   });
 

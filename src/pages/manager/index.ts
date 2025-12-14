@@ -142,13 +142,13 @@ function renderSessions(list: SessionMetadata[]): void {
 
 async function renderRecovery(): Promise<void> {
   const emergency = await sendMessage<Session[]>(MessageType.GET_EMERGENCY_SESSIONS);
-  
+
   if (emergency.length === 0) {
     els.recoveryList.innerHTML = '<div class="empty"><p>No recovery sessions available</p></div>';
     els.clearRecoveryBtn.classList.add('hidden');
     return;
   }
-  
+
   els.clearRecoveryBtn.classList.remove('hidden');
   els.recoveryList.innerHTML = emergency
     .map(
@@ -188,8 +188,8 @@ function switchView(view: string): void {
   els.navItems.forEach(n => n.classList.toggle('active', (n as HTMLElement).dataset.view === view));
   els.views.forEach(v => v.classList.toggle('active', v.id === `${view}View`));
   els.viewTitle.textContent = view.charAt(0).toUpperCase() + view.slice(1);
-  if (view === 'recovery') renderRecovery();
-  if (view === 'settings') loadSettings();
+  if (view === 'recovery') void renderRecovery();
+  if (view === 'settings') void loadSettings();
 }
 
 // Actions
@@ -426,7 +426,8 @@ function setupEvents(): void {
     if (!card) return;
     const id = card.dataset.id!;
     if (target.classList.contains('edit')) await openEditModal(id);
-    else if (target.classList.contains('restore')) await restoreSession(id, target as HTMLButtonElement);
+    else if (target.classList.contains('restore'))
+      await restoreSession(id, target as HTMLButtonElement);
     else if (target.classList.contains('delete')) await deleteSession(id);
   });
 
@@ -476,18 +477,18 @@ function setupEvents(): void {
 
   // Settings changes
   els.autoSaveInterval.addEventListener('change', () => {
-    sendMessage(MessageType.UPDATE_SETTINGS, {
+    void sendMessage(MessageType.UPDATE_SETTINGS, {
       autoSaveInterval: Number(els.autoSaveInterval.value),
     });
   });
   els.saveScroll.addEventListener('change', () => {
-    sendMessage(MessageType.UPDATE_SETTINGS, { saveScrollPosition: els.saveScroll.checked });
+    void sendMessage(MessageType.UPDATE_SETTINGS, { saveScrollPosition: els.saveScroll.checked });
   });
   els.lazyRestore.addEventListener('change', () => {
-    sendMessage(MessageType.UPDATE_SETTINGS, { lazyRestore: els.lazyRestore.checked });
+    void sendMessage(MessageType.UPDATE_SETTINGS, { lazyRestore: els.lazyRestore.checked });
   });
   els.theme.addEventListener('change', () => {
-    sendMessage(MessageType.UPDATE_SETTINGS, { theme: els.theme.value });
+    void sendMessage(MessageType.UPDATE_SETTINGS, { theme: els.theme.value });
     document.documentElement.dataset.theme = els.theme.value;
   });
 
