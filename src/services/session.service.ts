@@ -120,6 +120,7 @@ class SessionService {
       description?: string;
       tags?: string[];
       folderId?: string;
+      tabs?: TabData[];
     }
   ): Promise<Session | null> {
     const session = await this.getSession(id);
@@ -138,6 +139,12 @@ class SessionService {
     }
     if (updates.folderId !== undefined) {
       session.folderId = updates.folderId;
+    }
+    if (updates.tabs !== undefined) {
+      session.tabs = updates.tabs;
+      session.tabCount = updates.tabs.length;
+      session.faviconPreview = updates.tabs.slice(0, 5).map(t => t.favicon);
+      session.domainPreview = [...new Set(updates.tabs.slice(0, 5).map(t => extractDomain(t.url)))];
     }
 
     session.updatedAt = now();
