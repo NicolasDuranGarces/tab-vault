@@ -1,271 +1,370 @@
-<p align="center">
-  <img src="docs/assets/logo.svg" alt="Tab Vault Logo" width="128" height="128">
-</p>
+<div align="center">
 
-<h1 align="center">Tab Vault</h1>
+  <img src="docs/assets/logo.svg" alt="Tab Vault" width="120" height="120" />
 
-<p align="center">
-  <strong>Powerful session management for Chrome</strong><br>
-  Save, organize, and restore your browser sessions with ease
-</p>
+  # Tab Vault
 
-<p align="center">
-  <a href="#features">Features</a> •
-  <a href="#installation">Installation</a> •
-  <a href="#usage">Usage</a> •
-  <a href="#keyboard-shortcuts">Shortcuts</a> •
-  <a href="#development">Development</a> •
-  <a href="#contributing">Contributing</a>
-</p>
+  **Enterprise-grade session management for Chrome**
 
-<p align="center">
-  <img src="https://img.shields.io/badge/manifest-v3-blue?style=flat-square" alt="Manifest V3">
-  <img src="https://img.shields.io/badge/typescript-5.3-blue?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript">
-  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License">
-  <img src="https://img.shields.io/badge/chrome-extension-yellow?style=flat-square&logo=googlechrome&logoColor=white" alt="Chrome Extension">
-</p>
+  Save, organize, and restore browser sessions with military-grade precision.
+
+  [![Chrome Extension](https://img.shields.io/badge/Platform-Chrome-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chrome.google.com)
+  [![Manifest V3](https://img.shields.io/badge/Manifest-V3-00C853?style=for-the-badge)](https://developer.chrome.com/docs/extensions/mv3/intro/)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+  [![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
+
+  [Features](#-features) •
+  [Installation](#-installation) •
+  [Usage](#-usage) •
+  [Development](#-development) •
+  [Documentation](#-documentation)
+
+</div>
 
 ---
 
-## 🚀 Overview
+## 📋 Table of Contents
 
-**Tab Vault** is a modern Chrome extension designed to revolutionize how you manage browser sessions. Whether you're a researcher juggling multiple projects, a developer with complex debugging setups, or anyone who values an organized browsing experience, Tab Vault has you covered.
+- [Overview](#-overview)
+- [Features](#-features)
+- [Installation](#-installation)
+- [Usage](#-usage)
+- [Keyboard Shortcuts](#-keyboard-shortcuts)
+- [Development](#-development)
+- [Architecture](#-architecture)
+- [API Reference](#-api-reference)
+- [Contributing](#-contributing)
+- [License](#-license)
 
-Built with **Manifest V3** for enhanced security and performance, Tab Vault provides a seamless experience for saving, organizing, and restoring your valuable browser sessions.
+---
+
+## 🎯 Overview
+
+**Tab Vault** is a next-generation Chrome extension engineered for professionals who demand excellence in browser session management. Built from the ground up with **Manifest V3** architecture, it delivers unparalleled performance, security, and reliability.
+
+### Why Tab Vault?
+
+| Challenge | Solution |
+|-----------|----------|
+| Lost tabs after crash | **Automatic crash recovery** with intelligent auto-save |
+| Disorganized workflows | **Smart categorization** with tags and custom naming |
+| Slow session restoration | **Optimized loading** with lazy tab initialization |
+| Storage limitations | **LZ-String compression** for efficient data storage |
+| Complex search | **Fuzzy search** powered by Fuse.js |
 
 ---
 
 ## ✨ Features
 
+<table>
+<tr>
+<td width="50%">
+
 ### 📁 Session Management
-- **One-Click Save** — Instantly save all tabs in your current window
-- **Smart Naming** — Auto-generated session names with timestamps
-- **Session Categories** — Organize sessions by project, topic, or custom tags
-- **Bulk Operations** — Manage multiple sessions at once
+- One-click session capture
+- Auto-generated smart names
+- Custom tags & categories
+- Bulk operations support
+- Session pinning & favorites
 
-### 🔄 Session Restoration
-- **Full Restoration** — Restore all tabs from a saved session
-- **Selective Restore** — Choose specific tabs to restore
-- **New Window Options** — Open sessions in new or existing windows
-- **Tab Group Support** — Preserve and restore Chrome tab groups
+</td>
+<td width="50%">
 
-### 🔍 Search & Filter
-- **Instant Search** — Find sessions and tabs quickly with fuzzy search
-- **Advanced Filters** — Filter by date, tags, or session type
-- **Tab Preview** — See all tabs in a session before restoring
+### 🔄 Restoration Engine
+- Full session restoration
+- Selective tab recovery
+- New window/existing window options
+- Chrome Tab Groups preservation
+- Scroll position memory
 
-### 💾 Backup & Sync
-- **Auto-Save** — Automatic session backups at regular intervals
-- **Export/Import** — Backup your sessions as JSON files
-- **Data Compression** — Efficient storage using LZ-String compression
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### 🔍 Search & Discovery
+- Instant fuzzy search
+- Advanced filtering (date, tags, type)
+- Tab preview before restore
+- Session history timeline
+- Quick access shortcuts
+
+</td>
+<td width="50%">
+
+### 💾 Data Management
+- Automatic interval backups
+- JSON export/import
+- LZ-String compression
+- Chrome sync integration
+- Storage optimization
+
+</td>
+</tr>
+<tr>
+<td width="50%">
 
 ### 🛡️ Crash Recovery
-- **Auto-Recovery** — Automatically saves sessions for crash recovery
-- **Session History** — Access previously saved session states
-- **Scroll Position Memory** — Remember scroll positions for each tab
+- Real-time session tracking
+- Automatic state persistence
+- Recovery checkpoint system
+- Graceful degradation
+- Data integrity validation
+
+</td>
+<td width="50%">
 
 ### ⚡ Performance
-- **Lightweight** — Minimal memory footprint
-- **Fast Loading** — Optimized for quick popup and manager page loads
-- **Efficient Storage** — Smart data compression and cleanup
+- Minimal memory footprint
+- Lazy loading architecture
+- Background service worker
+- Debounced operations
+- Efficient DOM updates
+
+</td>
+</tr>
+</table>
 
 ---
 
 ## 📥 Installation
 
-### From Chrome Web Store
-> Coming soon...
+### Chrome Web Store
 
-### Manual Installation (Development)
+> 🚧 **Coming Soon** — Currently in development
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/NicolasDuranGarces/tab-vault.git
-   cd tab-vault
-   ```
+### Manual Installation
 
-2. **Install dependencies**
-   ```bash
-   make install
-   # or
-   npm install
-   ```
+```bash
+# Clone repository
+git clone https://github.com/NicolasDuranGarces/tab-vault.git
 
-3. **Build the extension**
-   ```bash
-   make build
-   # or
-   npm run build
-   ```
+# Navigate to project
+cd tab-vault
 
-4. **Load in Chrome**
-   - Open Chrome and navigate to `chrome://extensions/`
-   - Enable **Developer mode** (toggle in top right)
-   - Click **Load unpacked**
-   - Select the `dist` folder from the project directory
+# Install dependencies
+make install
+
+# Build extension
+make build
+```
+
+**Load in Chrome:**
+
+1. Navigate to `chrome://extensions/`
+2. Enable **Developer mode** (top right toggle)
+3. Click **Load unpacked**
+4. Select the `dist` directory
 
 ---
 
-## 🎯 Usage
+## � Usage
 
-### Quick Save
-1. Click the Tab Vault icon in your Chrome toolbar
-2. Click **Save Current Session**
-3. (Optional) Add a custom name and tags
-4. Your session is saved!
+### Quick Save Session
 
-### Restore a Session
-1. Open the Tab Vault popup or manager page
-2. Browse or search for your desired session
-3. Click **Restore** to open all tabs
-4. Choose to open in a new window or current window
+```
+Click Tab Vault icon → Save Current Session → Done ✓
+```
 
-### Manage Sessions
-- Access the full **Session Manager** for advanced operations
-- Edit session names and tags
-- Delete outdated sessions
-- Export sessions for backup
+### Restore Session
+
+```
+Open Tab Vault → Find session → Click Restore → Choose window option
+```
+
+### Session Manager
+
+Access the full-featured manager for advanced operations:
+- Edit session metadata
+- Batch delete operations
+- Export/import sessions
+- Configure auto-save settings
 
 ---
 
 ## ⌨️ Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl/Cmd + Shift + S` | Save current session |
-| `Ctrl/Cmd + Shift + R` | Restore last session |
-| `Ctrl/Cmd + Shift + V` | Open Tab Vault popup |
+| Shortcut | Action | Platform |
+|----------|--------|----------|
+| `Ctrl + Shift + S` | Save current session | Windows/Linux |
+| `Cmd + Shift + S` | Save current session | macOS |
+| `Ctrl + Shift + R` | Restore last session | Windows/Linux |
+| `Cmd + Shift + R` | Restore last session | macOS |
+| `Ctrl + Shift + V` | Open Tab Vault | Windows/Linux |
+| `Cmd + Shift + V` | Open Tab Vault | macOS |
 
-> **Tip:** You can customize these shortcuts in Chrome's extension settings at `chrome://extensions/shortcuts`
+> **Pro Tip:** Customize shortcuts at `chrome://extensions/shortcuts`
 
 ---
 
 ## 🛠️ Development
 
 ### Prerequisites
-- Node.js 18+ 
-- npm 9+
-- Make (optional, for Makefile commands)
+
+| Requirement | Version |
+|-------------|---------|
+| Node.js | 18.0+ |
+| npm | 9.0+ |
+| Make | 3.0+ (optional) |
 
 ### Quick Start
 
 ```bash
-# Clone the repository
-git clone https://github.com/NicolasDuranGarces/tab-vault.git
-cd tab-vault
-
 # Install dependencies
 make install
 
-# Start development mode (with hot reload)
+# Start development server with hot reload
 make dev
+
+# Run linting
+make lint
+
+# Run tests
+make test
 ```
 
 ### Available Commands
 
-| Command | Description |
-|---------|-------------|
-| `make install` | Install all dependencies |
-| `make dev` | Start development mode with watch |
-| `make build` | Build for production |
-| `make lint` | Run ESLint |
-| `make lint-fix` | Run ESLint with auto-fix |
-| `make type-check` | Run TypeScript type checking |
-| `make test` | Run tests |
-| `make test-coverage` | Run tests with coverage report |
-| `make clean` | Clean build artifacts |
-| `make package` | Create distributable zip file |
-| `make help` | Show all available commands |
+```bash
+make install        # Install dependencies
+make dev            # Development mode (watch)
+make build          # Production build
+make lint           # Run ESLint
+make lint-fix       # Auto-fix lint issues
+make type-check     # TypeScript validation
+make test           # Run test suite
+make test-coverage  # Generate coverage report
+make package        # Create distributable ZIP
+make clean          # Remove build artifacts
+make help           # Show all commands
+```
 
-### Project Structure
+---
+
+## 🏗️ Architecture
 
 ```
 tab-vault/
 ├── src/
-│   ├── background/      # Service worker (background script)
-│   ├── content/         # Content scripts
-│   ├── popup/           # Extension popup UI
-│   ├── pages/           # Full-page manager UI
-│   ├── services/        # Core business logic
+│   ├── background/          # Service worker
+│   ├── content/             # Content scripts
+│   ├── popup/               # Extension popup UI
+│   ├── pages/               # Full-page manager
+│   ├── services/            # Business logic layer
 │   │   ├── session.service.ts
 │   │   ├── storage.service.ts
 │   │   ├── tab.service.ts
 │   │   ├── search.service.ts
 │   │   ├── backup.service.ts
 │   │   └── compression.service.ts
-│   ├── utils/           # Utility functions
-│   ├── types/           # TypeScript type definitions
-│   └── manifest.json    # Extension manifest
-├── dist/                # Built extension (generated)
-├── Makefile             # Build automation
-├── webpack.config.js    # Webpack configuration
-├── tsconfig.json        # TypeScript configuration
-└── package.json         # Project dependencies
+│   ├── utils/               # Utility functions
+│   ├── types/               # TypeScript definitions
+│   └── manifest.json        # Extension manifest
+├── dist/                    # Build output
+├── docs/                    # Documentation
+├── Makefile                 # Build automation
+├── webpack.config.js        # Bundler config
+└── tsconfig.json            # TypeScript config
 ```
 
 ### Tech Stack
 
-- **TypeScript** — Type-safe development
-- **Webpack** — Module bundling and build optimization
-- **ESLint + Prettier** — Code quality and formatting
-- **Jest** — Unit testing framework
-- **Fuse.js** — Fuzzy search functionality
-- **LZ-String** — Data compression
+| Technology | Purpose |
+|------------|---------|
+| TypeScript 5.3 | Type-safe development |
+| Webpack 5 | Module bundling |
+| ESLint + Prettier | Code quality |
+| Jest | Unit testing |
+| Fuse.js | Fuzzy search |
+| LZ-String | Data compression |
 
 ---
 
-## 🔒 Privacy & Permissions
+## � API Reference
 
-Tab Vault requests the following permissions:
+### SessionService
+
+```typescript
+// Save current window session
+SessionService.saveSession(name?: string, tags?: string[]): Promise<Session>
+
+// Restore session by ID
+SessionService.restoreSession(sessionId: string, options?: RestoreOptions): Promise<void>
+
+// Get all sessions
+SessionService.getSessions(): Promise<Session[]>
+
+// Delete session
+SessionService.deleteSession(sessionId: string): Promise<void>
+```
+
+### StorageService
+
+```typescript
+// Get stored data
+StorageService.get<T>(key: string): Promise<T | null>
+
+// Set data with optional compression
+StorageService.set<T>(key: string, value: T, compress?: boolean): Promise<void>
+
+// Clear all extension data
+StorageService.clear(): Promise<void>
+```
+
+---
+
+## 🔒 Privacy & Security
 
 | Permission | Purpose |
 |------------|---------|
-| `tabs` | Access tab URLs and titles for saving sessions |
-| `storage` | Store your saved sessions locally |
-| `alarms` | Schedule automatic backups |
-| `scripting` | Capture scroll positions for restoration |
+| `tabs` | Access tab URLs and titles |
+| `storage` | Local session storage |
+| `alarms` | Scheduled auto-backups |
+| `scripting` | Scroll position capture |
 
-**Your data stays local.** Tab Vault does not send any data to external servers. All sessions are stored in your browser's local storage.
+> **🔐 Your data never leaves your browser.** Tab Vault operates entirely locally with zero external data transmission.
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We welcome contributions from the community.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+```bash
+# Fork the repository
+# Create feature branch
+git checkout -b feature/amazing-feature
 
-### Development Guidelines
+# Commit changes
+git commit -m 'feat: add amazing feature'
 
-- Follow the existing code style
-- Write meaningful commit messages
+# Push to branch
+git push origin feature/amazing-feature
+
+# Open Pull Request
+```
+
+### Guidelines
+
+- Follow existing code conventions
+- Write meaningful commit messages ([Conventional Commits](https://www.conventionalcommits.org/))
 - Add tests for new features
-- Update documentation as needed
+- Update documentation accordingly
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🙏 Acknowledgments
+<div align="center">
 
-- Built with ❤️ using [TypeScript](https://www.typescriptlang.org/)
-- Icons from [Lucide Icons](https://lucide.dev/)
-- Search powered by [Fuse.js](https://fusejs.io/)
+  **Built with precision by [Nicolas Duran Garces](https://github.com/NicolasDuranGarces)**
 
----
+  ⭐ Star this repository if Tab Vault improves your workflow
 
-<p align="center">
-  <strong>Made with ❤️ by <a href="https://github.com/NicolasDuranGarces">Nicolas Duran Garces</a></strong>
-</p>
+  <sub>© 2024 Tab Vault. All rights reserved.</sub>
 
-<p align="center">
-  <sub>If you find Tab Vault useful, please consider giving it a ⭐ on GitHub!</sub>
-</p>
+</div>
