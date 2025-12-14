@@ -491,7 +491,9 @@ function setupEvents(): void {
     void sendMessage(MessageType.UPDATE_SETTINGS, { lazyRestore: els.lazyRestore.checked });
   });
   els.clearPreviousTabs.addEventListener('change', () => {
-    void sendMessage(MessageType.UPDATE_SETTINGS, { clearPreviousTabs: els.clearPreviousTabs.checked });
+    void sendMessage(MessageType.UPDATE_SETTINGS, {
+      clearPreviousTabs: els.clearPreviousTabs.checked,
+    });
   });
   els.theme.addEventListener('change', () => {
     void sendMessage(MessageType.UPDATE_SETTINGS, { theme: els.theme.value });

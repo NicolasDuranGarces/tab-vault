@@ -240,7 +240,7 @@ class SessionService {
           try {
             await chrome.tabs.remove(tabsToClose);
           } catch (error) {
-             console.error('Failed to close previous tabs:', error);
+            console.error('Failed to close previous tabs:', error);
           }
         }
       }
@@ -454,7 +454,9 @@ class SessionService {
       if (settings.detectDuplicates && !settings.clearPreviousTabs) {
         const currentTabs = await tabService.captureCurrentWindowTabs(settings);
         const currentUrls = currentTabs.map(t => t.url);
-        tabsToRestore = tabsToRestore.filter(t => !currentUrls.some(cu => this.isUrlMatch(t.url, cu)));
+        tabsToRestore = tabsToRestore.filter(
+          t => !currentUrls.some(cu => this.isUrlMatch(t.url, cu))
+        );
       }
 
       // Capture current tabs to close if requested
@@ -465,7 +467,7 @@ class SessionService {
       }
 
       const createdTabIds = await tabService.restoreTabs(tabsToRestore, restoreOptions);
-      
+
       // Update statistics
       const stats = await storageService.getStatistics();
       await storageService.updateStatistics({
@@ -480,13 +482,13 @@ class SessionService {
 
       // Close previous tabs if requested
       if (tabsToClose.length > 0) {
-          if (createdTabIds.length > 0) {
-            try {
-              await chrome.tabs.remove(tabsToClose);
-            } catch (error) {
-               console.error('Failed to close previous tabs:', error);
-            }
+        if (createdTabIds.length > 0) {
+          try {
+            await chrome.tabs.remove(tabsToClose);
+          } catch (error) {
+            console.error('Failed to close previous tabs:', error);
           }
+        }
       }
 
       return createdTabIds;
