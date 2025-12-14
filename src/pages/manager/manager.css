@@ -599,6 +599,22 @@ body {
   transition: all 0.2s ease;
 }
 
+.confirm-message {
+  text-align: center;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.btn-danger {
+  background: #ef4444 !important;
+  color: white !important;
+}
+
+.btn-danger:hover {
+  background: #dc2626 !important;
+}
+
 .modal-box input:focus,
 .modal-box textarea:focus {
   outline: none;

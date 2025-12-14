@@ -70,6 +70,12 @@ const els = {
   editTabCount: document.getElementById('editTabCount')!,
   closeEditModal: document.getElementById('closeEditModal')!,
   cancelEditBtn: document.getElementById('cancelEditBtn')!,
+  // Confirm Modal
+  confirmModal: document.getElementById('confirmModal')!,
+  confirmTitle: document.getElementById('confirmTitle')!,
+  confirmMessage: document.getElementById('confirmMessage')!,
+  cancelConfirmBtn: document.getElementById('cancelConfirmBtn')!,
+  doConfirmBtn: document.getElementById('doConfirmBtn')!,
 };
 
 // Helpers
@@ -209,10 +215,49 @@ async function restoreSession(id: string, btn?: HTMLButtonElement): Promise<void
 }
 
 async function deleteSession(id: string): Promise<void> {
-  if (!confirm('Delete this session?')) return;
-  await sendMessage(MessageType.DELETE_SESSION, { id });
-  sessions = sessions.filter(s => s.id !== id);
-  renderSessions(sessions);
+  const confirmed = await confirmAction(
+    'Delete Session',
+    'Are you sure you want to delete this session? This action cannot be undone.'
+  );
+  if (!confirmed) return;
+
+  try {
+    await sendMessage(MessageType.DELETE_SESSION, { id });
+    sessions = sessions.filter(s => s.id !== id);
+    renderSessions(sessions);
+  } catch (error) {
+    console.error('Failed to delete session:', error);
+    alert('Failed to delete session');
+  }
+}
+
+async function confirmAction(title: string, message: string): Promise<boolean> {
+  return new Promise(resolve => {
+    els.confirmTitle.textContent = title;
+    els.confirmMessage.textContent = message;
+    els.confirmModal.classList.remove('hidden');
+
+    const cleanup = () => {
+      els.confirmModal.classList.add('hidden');
+      els.doConfirmBtn.removeEventListener('click', onConfirm);
+      els.cancelConfirmBtn.removeEventListener('click', onCancel);
+      els.confirmModal.querySelector('.modal-bg')?.removeEventListener('click', onCancel);
+    };
+
+    const onConfirm = () => {
+      cleanup();
+      resolve(true);
+    };
+
+    const onCancel = () => {
+      cleanup();
+      resolve(false);
+    };
+
+    els.doConfirmBtn.addEventListener('click', onConfirm);
+    els.cancelConfirmBtn.addEventListener('click', onCancel);
+    els.confirmModal.querySelector('.modal-bg')?.addEventListener('click', onCancel);
+  });
 }
 
 function showModal(): void {
