@@ -112,7 +112,10 @@ class TabService {
   private async getTabContentData(
     tabId: number,
     settings: Settings
-  ): Promise<{ scrollPosition?: { x: number; y: number }; formData?: Record<string, string> } | null> {
+  ): Promise<{
+    scrollPosition?: { x: number; y: number };
+    formData?: Record<string, string>;
+  } | null> {
     try {
       const results = await chrome.tabs.sendMessage(tabId, {
         type: 'GET_CONTENT_DATA',
@@ -121,7 +124,10 @@ class TabService {
           getFormData: settings.saveFormData,
         },
       });
-      return results as { scrollPosition?: { x: number; y: number }; formData?: Record<string, string> };
+      return results as {
+        scrollPosition?: { x: number; y: number };
+        formData?: Record<string, string>;
+      };
     } catch {
       return null;
     }
@@ -150,7 +156,7 @@ class TabService {
     if (options.newWindow) {
       const window = await chrome.windows.create({});
       windowId = window.id;
-      
+
       // Remove the default new tab
       if (window.tabs?.[0]?.id) {
         await chrome.tabs.remove(window.tabs[0].id);
@@ -176,7 +182,7 @@ class TabService {
         }
 
         const createdTab = await chrome.tabs.create(createOptions);
-        
+
         if (createdTab.id) {
           createdTabIds.push(createdTab.id);
 
@@ -189,14 +195,14 @@ class TabService {
           // Handle group restoration
           if (options.restoreGroups && tabData.groupId !== -1 && tabData.groupId !== undefined) {
             const oldGroupId = tabData.groupId;
-            
+
             if (!groupMapping.has(oldGroupId)) {
               // Create new group
               const newGroupId = await chrome.tabs.group({
                 tabIds: [createdTab.id],
                 createProperties: windowId ? { windowId } : undefined,
               });
-              
+
               // Set group properties
               if (tabData.groupColor || tabData.groupName) {
                 await chrome.tabGroups.update(newGroupId, {
@@ -204,7 +210,7 @@ class TabService {
                   title: tabData.groupName,
                 });
               }
-              
+
               groupMapping.set(oldGroupId, newGroupId);
             } else {
               // Add to existing group
@@ -257,7 +263,7 @@ class TabService {
    */
   detectDuplicates(tabs: TabData[]): Map<string, TabData[]> {
     const urlMap = new Map<string, TabData[]>();
-    
+
     for (const tab of tabs) {
       const existing = urlMap.get(tab.url);
       if (existing) {
@@ -266,7 +272,7 @@ class TabService {
         urlMap.set(tab.url, [tab]);
       }
     }
-    
+
     // Return only duplicates
     const duplicates = new Map<string, TabData[]>();
     for (const [url, tabList] of urlMap) {
@@ -274,7 +280,7 @@ class TabService {
         duplicates.set(url, tabList);
       }
     }
-    
+
     return duplicates;
   }
 

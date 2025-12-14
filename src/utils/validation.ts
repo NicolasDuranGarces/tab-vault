@@ -25,17 +25,17 @@ export function isValidUrl(url: string): boolean {
 
   try {
     const parsed = new URL(url);
-    
+
     // Block dangerous protocols
     if (BLOCKED_PROTOCOLS.some(protocol => parsed.protocol === protocol)) {
       return false;
     }
-    
+
     // Only allow known safe protocols
     if (!ALLOWED_PROTOCOLS.some(protocol => parsed.protocol === protocol)) {
       return false;
     }
-    
+
     return true;
   } catch {
     return false;
@@ -51,7 +51,7 @@ export function sanitizeUrl(url: string): string | null {
   if (!isValidUrl(url)) {
     return null;
   }
-  
+
   try {
     const parsed = new URL(url);
     // Remove any user credentials from URL
@@ -88,18 +88,18 @@ export function matchesDomainPattern(url: string, pattern: string): boolean {
     const parsed = new URL(url);
     const domain = parsed.hostname.toLowerCase();
     const normalizedPattern = pattern.toLowerCase().trim();
-    
+
     // Exact match
     if (domain === normalizedPattern) {
       return true;
     }
-    
+
     // Wildcard match (*.example.com matches sub.example.com)
     if (normalizedPattern.startsWith('*.')) {
       const suffix = normalizedPattern.slice(2);
       return domain.endsWith(suffix) || domain === suffix.slice(1);
     }
-    
+
     return false;
   } catch {
     return false;

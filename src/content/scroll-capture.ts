@@ -24,14 +24,7 @@ interface ContentData {
 /**
  * Input types that should never be captured for security
  */
-const SENSITIVE_INPUT_TYPES = [
-  'password',
-  'credit-card',
-  'cc-number',
-  'cc-exp',
-  'cc-csc',
-  'cvv',
-];
+const SENSITIVE_INPUT_TYPES = ['password', 'credit-card', 'cc-number', 'cc-exp', 'cc-csc', 'cvv'];
 
 /**
  * Input name patterns that indicate sensitive data
@@ -55,7 +48,9 @@ const SENSITIVE_NAME_PATTERNS = [
 /**
  * Checks if an input is sensitive and should not be captured
  */
-function isSensitiveInput(input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): boolean {
+function isSensitiveInput(
+  input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+): boolean {
   // Check input type
   if (input instanceof HTMLInputElement) {
     if (SENSITIVE_INPUT_TYPES.includes(input.type)) {
@@ -102,11 +97,11 @@ function getScrollPosition(): ScrollPosition {
  */
 function getFormData(): Record<string, string> {
   const formData: Record<string, string> = {};
-  
+
   // Get all form inputs
-  const inputs = document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
-    'input, textarea, select'
-  );
+  const inputs = document.querySelectorAll<
+    HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+  >('input, textarea, select');
 
   inputs.forEach((input, index) => {
     // Skip sensitive fields
@@ -170,7 +165,7 @@ function restoreScrollPosition(position: ScrollPosition): void {
 function restoreFormData(data: Record<string, string>): void {
   for (const [id, value] of Object.entries(data)) {
     const input = document.getElementById(id) || document.querySelector(`[name="${id}"]`);
-    
+
     if (!input) continue;
 
     if (input instanceof HTMLInputElement) {
@@ -197,15 +192,15 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     switch (message.type) {
       case 'GET_CONTENT_DATA': {
         const data: ContentData = {};
-        
+
         if (message.payload?.getScroll) {
           data.scrollPosition = getScrollPosition();
         }
-        
+
         if (message.payload?.getFormData) {
           data.formData = getFormData();
         }
-        
+
         sendResponse(data);
         break;
       }

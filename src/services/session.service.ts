@@ -3,12 +3,7 @@
  * Core business logic for session management
  */
 
-import type {
-  Session,
-  SessionMetadata,
-  TabData,
-  RestoreOptions,
-} from '@/types';
+import type { Session, SessionMetadata, TabData, RestoreOptions } from '@/types';
 import { DEFAULT_RESTORE_OPTIONS } from '@/types';
 import { storageService } from './storage.service';
 import { tabService } from './tab.service';
@@ -37,7 +32,7 @@ class SessionService {
     } = {}
   ): Promise<Session> {
     const settings = await storageService.getSettings();
-    
+
     // Capture tabs based on option
     const tabs = options.allWindows
       ? await tabService.captureAllTabs(settings)
@@ -48,8 +43,8 @@ class SessionService {
     }
 
     const timestamp = now();
-    const shouldUseCompression = settings.useCompression && 
-      shouldCompress(tabs, settings.compressionThreshold);
+    const shouldUseCompression =
+      settings.useCompression && shouldCompress(tabs, settings.compressionThreshold);
 
     const session: Session = {
       id: generateId(),
@@ -89,7 +84,7 @@ class SessionService {
    */
   async getSession(id: string): Promise<Session | null> {
     const session = await storageService.getSession(id);
-    
+
     if (!session) {
       return null;
     }
@@ -172,17 +167,14 @@ class SessionService {
    * @param options - Restore options
    * @returns Array of created tab IDs
    */
-  async restoreSession(
-    id: string,
-    options: Partial<RestoreOptions> = {}
-  ): Promise<number[]> {
+  async restoreSession(id: string, options: Partial<RestoreOptions> = {}): Promise<number[]> {
     const session = await this.getSession(id);
     if (!session) {
       throw new Error('Session not found');
     }
 
     const restoreOptions: RestoreOptions = { ...DEFAULT_RESTORE_OPTIONS, ...options };
-    
+
     // Filter tabs if specific IDs are provided
     let tabsToRestore = session.tabs;
     if (restoreOptions.tabIds) {
@@ -273,8 +265,8 @@ class SessionService {
 
     const settings = await storageService.getSettings();
     const timestamp = now();
-    const shouldUseCompression = settings.useCompression && 
-      shouldCompress(allTabs, settings.compressionThreshold);
+    const shouldUseCompression =
+      settings.useCompression && shouldCompress(allTabs, settings.compressionThreshold);
 
     const merged: Session = {
       id: generateId(),
@@ -322,8 +314,8 @@ class SessionService {
     const timestamp = now();
 
     for (const [domain, tabs] of domainGroups) {
-      const shouldUseCompression = settings.useCompression && 
-        shouldCompress(tabs, settings.compressionThreshold);
+      const shouldUseCompression =
+        settings.useCompression && shouldCompress(tabs, settings.compressionThreshold);
 
       const session: Session = {
         id: generateId(),

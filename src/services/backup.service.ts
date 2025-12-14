@@ -47,7 +47,7 @@ class BackupService {
   async exportToJSON(includeSettings = false): Promise<Blob> {
     const sessions = await storageService.getAllSessions();
     const folders = await storageService.getFolders();
-    
+
     const exportData: ExportData = {
       version: this.EXPORT_VERSION,
       exportedAt: now(),
@@ -119,7 +119,7 @@ class BackupService {
       if (data.folders && Array.isArray(data.folders)) {
         const existingFolders = await storageService.getFolders();
         const existingFolderIds = new Set(existingFolders.map(f => f.id));
-        
+
         const folderIdMap = new Map<string, string>();
         const newFolders: Folder[] = [...existingFolders];
 
@@ -224,13 +224,17 @@ class BackupService {
       isEmergency: false,
       isCompressed: false,
       faviconPreview: validTabs.slice(0, 5).map(t => t.favicon),
-      domainPreview: [...new Set(validTabs.slice(0, 5).map(t => {
-        try {
-          return new URL(t.url).hostname;
-        } catch {
-          return 'unknown';
-        }
-      }))],
+      domainPreview: [
+        ...new Set(
+          validTabs.slice(0, 5).map(t => {
+            try {
+              return new URL(t.url).hostname;
+            } catch {
+              return 'unknown';
+            }
+          })
+        ),
+      ],
     };
   }
 
@@ -316,9 +320,9 @@ class BackupService {
   async deleteVersionHistory(sessionId: string): Promise<void> {
     const result = await storageService.get(StorageKey.SESSION_VERSIONS);
     const allVersions = result[StorageKey.SESSION_VERSIONS] || {};
-    
+
     delete allVersions[sessionId];
-    
+
     await storageService.set({ [StorageKey.SESSION_VERSIONS]: allVersions });
   }
 }

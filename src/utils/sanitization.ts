@@ -39,16 +39,16 @@ export function sanitizeSessionName(name: string, maxLength = 100): string {
   if (!name || typeof name !== 'string') {
     return 'Unnamed Session';
   }
-  
+
   // Trim and limit length
   let sanitized = name.trim().slice(0, maxLength);
-  
+
   // Remove control characters
   sanitized = sanitized.replace(/[\x00-\x1F\x7F]/g, '');
-  
+
   // Escape HTML entities
   sanitized = escapeHtml(sanitized);
-  
+
   return sanitized || 'Unnamed Session';
 }
 
@@ -62,7 +62,7 @@ export function sanitizeTag(tag: string, maxLength = 50): string {
   if (!tag || typeof tag !== 'string') {
     return '';
   }
-  
+
   return tag
     .trim()
     .toLowerCase()
@@ -81,7 +81,7 @@ export function sanitizeDescription(description: string, maxLength = 500): strin
   if (!description || typeof description !== 'string') {
     return '';
   }
-  
+
   return description
     .trim()
     .slice(0, maxLength)
@@ -99,7 +99,7 @@ export function sanitizeFormValue(value: string, maxLength = 1000): string {
   if (!value || typeof value !== 'string') {
     return '';
   }
-  
+
   return value.slice(0, maxLength);
 }
 
@@ -113,11 +113,11 @@ export function sanitizeFolderName(name: string, maxLength = 50): string {
   if (!name || typeof name !== 'string') {
     return 'New Folder';
   }
-  
+
   let sanitized = name.trim().slice(0, maxLength);
   sanitized = sanitized.replace(/[\x00-\x1F\x7F]/g, '');
   sanitized = escapeHtml(sanitized);
-  
+
   return sanitized || 'New Folder';
 }
 
@@ -131,7 +131,7 @@ export function sanitizeTags(tags: string[], maxTags = 20): string[] {
   if (!Array.isArray(tags)) {
     return [];
   }
-  
+
   return tags
     .slice(0, maxTags)
     .map(tag => sanitizeTag(tag))
