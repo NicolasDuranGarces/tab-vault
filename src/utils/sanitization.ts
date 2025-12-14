@@ -46,9 +46,6 @@ export function sanitizeSessionName(name: string, maxLength = 100): string {
   // Remove control characters
   sanitized = sanitized.replace(/[\x00-\x1F\x7F]/g, '');
 
-  // Escape HTML entities
-  sanitized = escapeHtml(sanitized);
-
   return sanitized || 'Unnamed Session';
 }
 
@@ -85,8 +82,7 @@ export function sanitizeDescription(description: string, maxLength = 500): strin
   return description
     .trim()
     .slice(0, maxLength)
-    .replace(/[\x00-\x1F\x7F]/g, '')
-    .replace(/[<>]/g, char => HTML_ENTITIES[char] || char);
+    .replace(/[\x00-\x1F\x7F]/g, '');
 }
 
 /**
@@ -116,7 +112,6 @@ export function sanitizeFolderName(name: string, maxLength = 50): string {
 
   let sanitized = name.trim().slice(0, maxLength);
   sanitized = sanitized.replace(/[\x00-\x1F\x7F]/g, '');
-  sanitized = escapeHtml(sanitized);
 
   return sanitized || 'New Folder';
 }
