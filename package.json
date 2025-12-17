@@ -1,6 +1,6 @@
 {
   "name": "tab-vault",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Powerful session management for Chrome - Save, organize, and restore your browser sessions",
   "private": true,
   "scripts": {

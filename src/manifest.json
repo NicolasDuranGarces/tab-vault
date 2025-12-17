@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Tab Vault",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Powerful session management for Chrome - Save, organize, and restore your browser sessions with ease",
   "permissions": [
     "tabs",
@@ -11,8 +11,7 @@
     "contextMenus"
   ],
   "optional_permissions": [
-    "tabGroups",
-    "scripting"
+    "tabGroups"
   ],
   "optional_host_permissions": [
     "<all_urls>"
